@@ -52,6 +52,15 @@ public class GojiraGameTest {
 		helper.getLevel().setChunkForced(pos.getX() >> 4, pos.getZ() >> 4, true);
 	}
 
+	/** Keeps every chunk between two corners loaded and ticking (test spots land at random places, often across chunk edges). */
+	private static void forceArea(GameTestHelper helper, BlockPos a, BlockPos b) {
+		for (int cx = Math.min(a.getX(), b.getX()) >> 4; cx <= Math.max(a.getX(), b.getX()) >> 4; cx++) {
+			for (int cz = Math.min(a.getZ(), b.getZ()) >> 4; cz <= Math.max(a.getZ(), b.getZ()) >> 4; cz++) {
+				helper.getLevel().setChunkForced(cx, cz, true);
+			}
+		}
+	}
+
 	private static boolean padIntact(GameTestHelper helper, BlockPos top, int radius) {
 		BlockPos base = top.below();
 		for (BlockPos p : BlockPos.betweenClosed(base.offset(-radius, 0, -radius), base.offset(radius, 0, radius))) {
@@ -444,13 +453,15 @@ public class GojiraGameTest {
 	}
 
 	/** 0.1.5: killed underwater, it topples, and when the death animation ends it leaves a big bone-block skeleton on the sea floor. */
-	@GameTest(maxTicks = 220)
+	// its own batch: the 70-block skeleton must not land on another test's blocks
+	@GameTest(environment = "gojiramod:skeleton", maxTicks = 220)
 	public void underwaterDeathLeavesSkeleton(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		BlockPos feet = helper.absolutePos(new BlockPos(1, 1, 1)).above(285);
 		// a stone sea floor big enough for the whole skeleton (it falls east and faces south), a deep pool around Gojira,
 		// and one stone block it must NOT replace, plus some seagrass it may replace
 		BlockPos lo = feet.offset(-3, -1, GojiraSkeletonLayout.MIN_B - 3), hi = feet.offset(GojiraSkeletonLayout.MAX_A + 3, -1, GojiraSkeletonLayout.MAX_B + 3);
+		forceArea(helper, lo, hi); // the skeleton skips unloaded chunks, so keep the whole sea floor loaded
 		for (BlockPos p : BlockPos.betweenClosed(lo, hi)) {
 			level.setBlock(p, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
 		}

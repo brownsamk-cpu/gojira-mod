@@ -110,7 +110,7 @@ def beam_trail(dr, Sp, V, wp, sc):
         dr.ellipse([q[0] - r, q[1] - r, q[0] + r, q[1] + r], fill=(255, 255, 255))
 
 if __name__ == "__main__":
-    out = sys.argv[1] if len(sys.argv) > 1 else "/workspace/showa_godzilla_0.2.0_preview.png"
+    out = sys.argv[1] if len(sys.argv) > 1 else "/workspace/showa_godzilla_0.2.1_preview.png"
     font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 34)
     fs = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 22)
     main = render(-math.pi * 0.22, -0.12, size=1000)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     tiles = [("Front three-quarter view", main), ("Jet flight: beam blasting backward", fly), ("Drop kick: both feet!", kick), ("Victory dance", dance)]
     TW, TH = 760, 760
     sheet = Image.new("RGB", (2 * (TW + 24) + 24, 96 + 2 * (TH + 50)), (30, 32, 38)); d = ImageDraw.Draw(sheet)
-    d.text((24, 26), "Gojira Mod 0.2.0: Showa Godzilla, the hero (54.67 blocks tall)", fill=(240, 240, 240), font=font)
+    d.text((24, 26), "Gojira Mod 0.2.1: Showa Godzilla, the hero (54.67 blocks tall)", fill=(240, 240, 240), font=font)
     for i, (lab, im) in enumerate(tiles):
         im.thumbnail((TW, TH), Image.LANCZOS)
         x = 24 + (i % 2) * (TW + 24); y = 96 + (i // 2) * (TH + 50)

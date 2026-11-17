@@ -5,21 +5,21 @@ public final class ShowaDimensions {
 	/** Height he is drawn at, in blocks (164/3: the same as Gojira). */
 	public static final float VISUAL_HEIGHT = 54.666666666666664F;
 	/** Unscaled model height in model pixels. */
-	public static final float MODEL_HEIGHT_PX = 60.6895F;
+	public static final float MODEL_HEIGHT_PX = 60.6041F;
 	/** How much the renderer scales the model up. */
-	public static final float VISUAL_SCALE = 14.4121F;
+	public static final float VISUAL_SCALE = 14.4325F;
 	/** The beam starts here: this many blocks above his feet and in front of his body (standing up). */
-	public static final double MOUTH_UP = 44.714, MOUTH_FORWARD = 14.870;
+	public static final double MOUTH_UP = 44.700, MOUTH_FORWARD = 14.891;
 	/** The model's root pivot (what the jet-flight pose tips around), in blocks above his feet. */
-	public static final double ROOT_PIVOT_UP = 21.618;
+	public static final double ROOT_PIVOT_UP = 21.649;
 	/** The farthest point of his feet/toes from his center, in blocks. */
-	public static final double FEET_REACH = 15.269;
+	public static final double FEET_REACH = 16.160;
 	/** How far the drawn model reaches from his center: snout, tail tip, half width (blocks). */
-	public static final double FRONT_REACH = 15.288, TAIL_REACH = 70.487, HALF_WIDTH = 16.167;
+	public static final double FRONT_REACH = 15.827, TAIL_REACH = 70.564, HALF_WIDTH = 16.190;
 	/** Half the width of his belly, in blocks: how high his body rests when he lies on his side (falling over). */
-	public static final double BODY_HALF_WIDTH = 11.710;
+	public static final double BODY_HALF_WIDTH = 11.726;
 	/** Number of model parts, cubes and back plates (for the tests). */
-	public static final int PARTS = 48, CUBES = 185, DORSAL_PLATES = 24;
+	public static final int PARTS = 67, CUBES = 615, DORSAL_PLATES = 43;
 
 	private ShowaDimensions() {
 	}

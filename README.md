@@ -93,6 +93,17 @@ Minecraft design (no movie models, textures or sounds copied), and he looks clea
   three rows of **bright white, rounded** back plates (Gojira's are pale and jagged). His head is **round and friendly**:
   a short rounded muzzle, **big round eyes** (white with a dark pupil and a shine), little ear bumps and a smiling lip
   line. 48 moving parts, 185 cubes, 24 plates, a 1024 x 1024 skin.
+- **Super detailed (new in 0.2.1, June's request):** 67 moving parts, **615 cubes** and **43 layered white plates** (each
+  plate is six boxes: a base, middle, upper and tip layer, a raised pale-grey core and a back lobe), running in three rows
+  down his back and on every tail segment. Knobbly skin bumps all over his body, thighs, shins, arms, neck, head and tail,
+  plus scale ridges along the tail. A detailed face: brow ridges, upper and lower eyelids, nostrils with rims, two-step
+  ear bumps, jowls, smile corners, 11 top and 11 bottom teeth, a pink tongue and a chin. Three fingers and a thumb on
+  each hand with two-part claws, four toes with toenails and a heel on each foot, knee caps, calf, thigh and shoulder
+  bulges, and a tan belly made of separate segments with dark lines between them (and tan throat and tail-underside
+  segments). The hand-made skin has shaded knobs with bright tops and dark rims, scale-ridge rows, light flecks, pores, a
+  soft bevel highlight and shadowed edges. The plates have fine striations, a blue-grey rim and a cream base. The eyes have
+  a brown iris, a lid shadow and two shines. The spawn egg is more detailed too: striped plates with shaded edges, shiny
+  knobs, belly segment lines with pits, and sparkles.
 - **Same size as Gojira:** 164/3 = 54.67 blocks tall (hitbox 6 x 16, like Gojira).
 - **A hero of humanity:** he never targets or hurts players, villagers, iron golems or animals, even if you hit him by
   accident. He goes after **hostile mobs only** (zombies, skeletons, creepers, spiders, slimes, ... and **Gojira**),
@@ -125,7 +136,8 @@ Minecraft design (no movie models, textures or sounds copied), and he looks clea
 - He flies at anything far away, so in a big open world he may zip off after a distant hostile mob.
 - While he's busy flying, kicking or dancing he doesn't start other attacks.
 - If he fights Gojira, neither can win (they both heal faster than they're hurt); `/kill` one of them.
-- His skin is a 1024 x 1024 texture, so the jar is now about 1.2 MB.
+- His skin is a 1024 x 1024 texture, so the jar is now about 1.4 MB. 615 cubes is more than Gojira's 326. Big fights
+  with several Showa Godzillas may run slower on weaker computers.
 
 ## Files
 - `tools/skeleton.py` generates the skeleton layout (`GojiraSkeletonLayout.java`) and can save a top-down preview PNG.
@@ -138,7 +150,8 @@ Minecraft design (no movie models, textures or sounds copied), and he looks clea
     - registration and model size/detail, and the detailed egg texture;
     - can't die, regen outpaces damage, the `/kill` off switch with its death animation (no bones on land), and `/kill` is
       forever (even after a reload);
-    - an underwater kill leaves the bone skeleton on the sea floor (and never replaces solid blocks);
+    - an underwater kill leaves the bone skeleton on the sea floor (and never replaces solid blocks); this one runs in its
+      own batch (`gojiramod:skeleton`) and keeps its whole sea floor loaded;
     - stomp, claw swipe and tail whip, and picking the swipe on its own;
     - beam hits, and a wall blocks the beam;
     - boss bar, always hostile to players, and targets the nearest mob (not armor stands or other Gojiras);
@@ -147,7 +160,8 @@ Minecraft design (no movie models, textures or sounds copied), and he looks clea
     - registration, size, his own model and detailed egg; can't die and regens;
     - hero targeting (picks the husk, never the player, villager, iron golem or cow), and his stomp and swipe spare friends;
     - flies to a far target tail first with the beam trail and lands; flies across gaps and up cliffs, walks over bridges;
-    - the drop kick hits with both feet, and he picks it on his own at mid range;
+    - the drop kick hits with both feet, and he picks it on his own at mid range (both wait until the whole kick area is
+      loaded and ticking);
     - the victory dance after a defeat;
     - `/kill` is forever (even after a reload) with no bones, and no bones when killed in deep water (after swimming).
 

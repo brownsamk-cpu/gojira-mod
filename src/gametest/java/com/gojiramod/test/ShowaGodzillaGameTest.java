@@ -72,6 +72,30 @@ public class ShowaGodzillaGameTest {
 		helper.getLevel().setChunkForced(pos.getX() >> 4, pos.getZ() >> 4, true);
 	}
 
+	/** Runs {@code then} once every chunk between two corners has finished loading and ticks entities (checks every tick). */
+	private static void whenTicking(GameTestHelper helper, BlockPos a, BlockPos b, Runnable then) {
+		boolean ready = true;
+		for (int x = Math.min(a.getX(), b.getX()); x <= Math.max(a.getX(), b.getX()) + 15 && ready; x += 16) {
+			for (int z = Math.min(a.getZ(), b.getZ()); z <= Math.max(a.getZ(), b.getZ()) + 15 && ready; z += 16) {
+				ready = helper.getLevel().isPositionEntityTicking(new BlockPos(Math.min(x, Math.max(a.getX(), b.getX())), a.getY(), Math.min(z, Math.max(a.getZ(), b.getZ()))));
+			}
+		}
+		if (ready) {
+			then.run();
+		} else {
+			helper.runAfterDelay(1, () -> whenTicking(helper, a, b, then));
+		}
+	}
+
+	/** Keeps every chunk between two corners loaded and ticking (test spots land at random places, often across chunk edges). */
+	private static void forceArea(GameTestHelper helper, BlockPos a, BlockPos b) {
+		for (int cx = Math.min(a.getX(), b.getX()) >> 4; cx <= Math.max(a.getX(), b.getX()) >> 4; cx++) {
+			for (int cz = Math.min(a.getZ(), b.getZ()) >> 4; cz <= Math.max(a.getZ(), b.getZ()) >> 4; cz++) {
+				helper.getLevel().setChunkForced(cx, cz, true);
+			}
+		}
+	}
+
 	private static void moveTo(Entity e, BlockPos pos, float yaw) {
 		e.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, yaw, 0);
 		if (e instanceof LivingEntity l) {
@@ -312,16 +336,17 @@ public class ShowaGodzillaGameTest {
 	}
 
 	/** DROP KICK: crouch, jump, and both feet hit the husk in front of him (not the villager next to it). */
-	@GameTest(environment = ENV, maxTicks = 100)
+	@GameTest(environment = ENV, maxTicks = 200)
 	public void dropKickHits(GameTestHelper helper) {
 		BlockPos pad = skyPad(helper, 170, 30);
+		forceArea(helper, pad.offset(-34, 0, -34), pad.offset(34, 0, 34)); // he must keep ticking when he leaps across a chunk edge
 		ShowaGodzilla g = calmShowa(helper, new BlockPos(1, 2, 1));
 		Husk husk = stillHusk(helper);
 		Villager villager = helper.spawnWithNoFreeWill(EntityTypes.VILLAGER, new BlockPos(1, 2, 2));
 		moveTo(g, pad, 0);
 		moveTo(husk, pad.south(22), 0);
 		moveTo(villager, pad.south(20).east(3), 0);
-		helper.runAfterDelay(2, () -> {
+		whenTicking(helper, pad.offset(-34, 0, -34), pad.offset(34, 0, 34), () -> helper.runAfterDelay(2, () -> {
 			double startZ = g.getZ();
 			g.startDropKick();
 			helper.assertTrue(g.getKickTicks() > 0 && g.getKicks() == 0 && g.isBusyAttacking(), "crouching for the kick");
@@ -333,23 +358,24 @@ public class ShowaGodzillaGameTest {
 				helper.assertTrue(g.getZ() > startZ + 3.0, "he leapt forward");
 			});
 			helper.runAfterDelay(ShowaGodzilla.KICK_ANIM + 4, () -> {
-				helper.assertTrue(g.getKickTicks() == 0, "kick finished, back on his feet");
+				helper.assertTrue(g.getKickTicks() == 0, "kick finished, back on his feet (kickTicks " + g.getKickTicks() + ", kicks " + g.getKicks() + ", alive " + g.isAlive() + ")");
 				helper.assertTrue(ShowaGodzilla.kickTiltDegrees(0.5F) > 60.0F && ShowaGodzilla.kickTiltDegrees(1.0F) == 0.0F, "tips back for the kick, then stands up");
 				clearPad(helper, pad, 30);
 				helper.succeed();
 			});
-		});
+		}));
 	}
 
 	/** On his own he picks the drop kick for a hostile mob in front of him that's just too far for a claw swipe. */
-	@GameTest(environment = ENV, maxTicks = 120)
+	@GameTest(environment = ENV, maxTicks = 160)
 	public void picksDropKickAtMidRange(GameTestHelper helper) {
 		BlockPos pad = skyPad(helper, 220, 30);
+		forceArea(helper, pad.offset(-34, 0, -34), pad.offset(34, 0, 34));
 		ShowaGodzilla g = calmShowa(helper, new BlockPos(1, 2, 1));
 		Husk husk = stillHusk(helper);
 		moveTo(g, pad, 0);
 		moveTo(husk, pad.south(26), 0);
-		helper.runAfterDelay(2, () -> {
+		whenTicking(helper, pad.offset(-34, 0, -34), pad.offset(34, 0, 34), () -> {
 			helper.assertTrue(!g.wantsToFly(husk), "close enough to walk");
 			g.setTarget(husk);
 		});
