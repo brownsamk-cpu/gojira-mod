@@ -25,6 +25,9 @@ A separate mod from the Horror Mod.
 - **It never breaks blocks.**
 - Spawn egg: **Gojira Spawn Egg** (`gojiramod:gojira_spawn_egg`), in the **Gojira Mod** creative tab and next to the Guardian
   egg in Spawn Eggs. It does not spawn naturally (see below).
+- 0.1.1: the spawn egg is "super detailed": a 64x64 custom texture with a dark grey scaly shell, pale spikes up the
+  middle, glowing white-blue cracks, a highlight and a rim light. It uses its own item model, not the tinted vanilla
+  spawn-egg template.
 
 ### Grown-up off switches
 - `/kill @e[type=gojiramod:gojira]` still works, because `/kill` bypasses the "can't be beaten" rule.
@@ -47,7 +50,7 @@ A separate mod from the Horror Mod.
 ## Files
 - `tools/gojira.py` generates everything from data: the model boxes (`GojiraModelLayer.java`), the textures (skin, spike
   glow, spawn egg, icon) and the roar `.ogg`. It also prints the model scale and mouth position used in `Gojira.java`.
-- Build: `./gradlew build` runs 11 game tests (registration, can't die, regen outpaces damage, `/kill` off switch, stomp,
+- Build: `./gradlew build` runs 12 game tests (registration, detailed egg texture, can't die, regen outpaces damage, `/kill` off switch, stomp,
   beam hits, wall blocks the beam, boss bar, always hostile, no drowning).
 
 License: CC0.

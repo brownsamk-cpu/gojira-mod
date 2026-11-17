@@ -94,6 +94,32 @@ public class GojiraGameTest {
 		helper.succeed();
 	}
 
+	/** 0.1.1: the spawn egg uses its own detailed 64x64 texture through a plain item model (not the tinted vanilla spawn egg template). */
+	@GameTest
+	public void spawnEggUsesDetailedTexture(GameTestHelper helper) {
+		try (var png = GojiraGameTest.class.getResourceAsStream("/assets/gojiramod/textures/item/gojira_spawn_egg.png");
+				var model = GojiraGameTest.class.getResourceAsStream("/assets/gojiramod/models/item/gojira_spawn_egg.json");
+				var item = GojiraGameTest.class.getResourceAsStream("/assets/gojiramod/items/gojira_spawn_egg.json")) {
+			helper.assertTrue(png != null && model != null && item != null, "egg texture, model and item definition are in the jar");
+			java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(png);
+			helper.assertTrue(img.getWidth() == 64 && img.getHeight() == 64, "64x64 egg texture, got " + img.getWidth() + "x" + img.getHeight());
+			java.util.Set<Integer> colors = new java.util.HashSet<>();
+			for (int y = 0; y < 64; y++) {
+				for (int x = 0; x < 64; x++) {
+					colors.add(img.getRGB(x, y));
+				}
+			}
+			helper.assertTrue(colors.size() > 300, "super detailed (many colors), got " + colors.size());
+			String m = new String(model.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+			String i = new String(item.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+			helper.assertTrue(m.contains("\"gojiramod:item/gojira_spawn_egg\"") && !m.contains("template_spawn_egg"), "model uses our own texture");
+			helper.assertTrue(i.contains("gojiramod:item/gojira_spawn_egg") && !i.contains("tints"), "item definition is not tinted");
+		} catch (java.io.IOException e) {
+			throw new RuntimeException(e);
+		}
+		helper.succeed();
+	}
+
 	/** Huge hits (even 100000 damage) never kill it: health stays at least 1 and it's still alive. */
 	@GameTest(maxTicks = 40)
 	public void gojiraCannotDie(GameTestHelper helper) {

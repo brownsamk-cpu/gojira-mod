@@ -5,7 +5,7 @@ Writes:
   src/client/java/com/gojiramod/client/GojiraModelLayer.java   the model's boxes (generated, do not edit by hand)
   textures/entity/gojira.png        dark grey scaly skin, pale dorsal spikes (box UVs packed by this script)
   textures/entity/gojira_glow.png   the spikes + mouth glow layer (shown while the white beam charges/fires)
-  textures/item/gojira_spawn_egg.png, icon.png
+  textures/item/gojira_spawn_egg.png (64x64 detailed egg), icon.png
   sounds/entity/gojira_roar.ogg     an original synthesized "skreeonk" style roar
 and prints the model height and mouth position, which Gojira.java uses (VISUAL_SCALE, MOUTH_UP, MOUTH_FORWARD)."""
 import math, os, random, subprocess, wave
@@ -217,19 +217,99 @@ for p in ("textures/entity",):
 img.save(A + "/textures/entity/gojira.png")
 glow.save(A + "/textures/entity/gojira_glow.png")
 
-# spawn egg: charcoal egg with pale jagged spike marks down the middle and a white spark
-egg = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-for y in range(16):
-    for x in range(16):
-        dx, dy = (x - 7.5) / 5.6, (y - 8.6) / (7.0 if y > 8 else 7.6)
-        r = dx * dx + dy * dy
-        if r <= 1.0:
-            c = (40, 42, 46) if r > 0.72 else ((78, 80, 84) if x < 7 and y < 8 else (60, 62, 66))
-            egg.putpixel((x, y), c + (255,))
-for (x, y) in [(7, 3), (8, 3), (7, 4), (6, 6), (7, 6), (8, 6), (7, 7), (7, 9), (8, 9), (6, 10), (7, 10), (7, 12), (8, 12)]:
-    egg.putpixel((x, y), (226, 230, 224, 255))
-for (x, y) in [(10, 5), (11, 6), (10, 7)]:
-    egg.putpixel((x, y), (250, 252, 255, 255))
+# ---------------- spawn egg: a "super detailed" 64x64 hand-painted-style egg (June and Leon's request) ----------------
+# Dark grey scaly egg with real scale rows and 3D shading, pale dorsal spikes running up the middle, glowing white-blue
+# cracks with a soft halo, a highlight on the upper left, a cool rim light on the right and a dark outline.
+# 64x64 is still a clean power of two, so it works in the item atlas and with mipmaps; item/generated renders it as-is
+# (no vanilla tinted spawn-egg template).
+EGG = 64
+erng = np.random.default_rng(1954)
+yy, xx = np.mgrid[0:EGG, 0:EGG].astype(float) + 0.5
+cx_, cy_ = 32.0, 34.0
+ry = np.where(yy < cy_, 29.5, 27.0)                  # pointier top, rounder bottom
+rx = 22.5 * (1 - 0.10 * np.clip((cy_ - yy) / 29.5, 0, 1))
+ex, ey = (xx - cx_) / rx, (yy - cy_) / ry
+r2 = ex * ex + ey * ey
+inside = r2 <= 1.0
+nz = np.sqrt(np.clip(1 - r2, 0, 1))                  # a sphere-ish normal for lighting
+L = np.array([-0.55, -0.6, 0.58]); L /= np.linalg.norm(L)
+diffuse = np.clip(ex * L[0] + ey * L[1] + nz * L[2], 0, 1)
+light = 0.42 + 0.75 * diffuse
+# scales: offset rows of rounded scales, each brighter at its top and dark along its lower rim
+row_h, col_w = 5.0, 6.0
+row = np.floor(yy / row_h)
+off = (row % 2) * col_w / 2
+col = np.floor((xx + off) / col_w)
+sx = ((xx + off) % col_w) / col_w - 0.5              # -0.5..0.5 across a scale
+sy = (yy % row_h) / row_h                            # 0 top .. 1 bottom of the scale row
+scale_edge = (sy + 1.6 * sx * sx) > 0.92             # curved lower rim of each scale
+scale_shade = 1.12 - 0.30 * sy - 0.15 * np.abs(sx)
+jitter = erng.normal(0, 1, (int(EGG / row_h) + 2, int(EGG / col_w) + 3))
+scale_tone = jitter[row.astype(int) % jitter.shape[0], col.astype(int) % jitter.shape[1]] * 5
+base = 84 + scale_tone + erng.normal(0, 2.5, (EGG, EGG))
+val = base * scale_shade
+val = np.where(scale_edge, val * 0.5, val)
+val = np.where((sy < 0.2) & ~scale_edge & (np.abs(sx) < 0.3), val * 1.18, val)  # glint on each scale's top
+rgb = np.stack([val * 0.97, val * 1.0, val * 1.07], -1) * light[..., None]
+# specular highlight (upper left) and cool rim light (right edge)
+spec = np.exp(-(((xx - 21) / 6.5) ** 2 + ((yy - 17) / 8.0) ** 2)) * 70
+rim = np.clip((r2 - 0.72) / 0.28, 0, 1) * np.clip(ex, 0, 1) * 55
+rgb += spec[..., None] + rim[..., None] * np.array([0.55, 0.75, 1.0])
+# dorsal spikes: pale bone plates running up the middle of the egg, bigger in the middle, each with shading + outline
+spike_mask = np.zeros((EGG, EGG), bool)
+spike_col = np.zeros((EGG, EGG, 3))
+spikes = [(54, 2.5, 5.0), (45, 3.5, 7.0), (35, 4.0, 8.0), (25, 3.8, 8.0), (15, 3.0, 6.5)]  # (base y, half width, height)
+for (by, hw, h) in spikes:
+    for k, dxo in ((0, 0.0), (1, -8.0), (2, 8.0)):     # center row plus two smaller side rows
+        s = 1.0 if k == 0 else 0.6
+        cxs = cx_ + dxo * (1 - abs(by - cy_) / 40)
+        bys, hws, hs = by + (2 if k else 0), hw * s, h * s
+        t = (bys - yy) / hs                             # 0 at base .. 1 at tip
+        half = hws * np.clip(1 - t, 0, 1) ** 0.85 * (1 + 0.18 * np.sin(t * 9))  # a slightly jagged plate edge
+        m = (t >= 0) & (t <= 1) & (np.abs(xx - cxs) <= half) & inside
+        # pale bone: lit on the left, cooler shadow on the right, darker toward the base
+        side = (xx - cxs) / np.maximum(half, 0.5)
+        v = 236 - 34 * np.clip(side, 0, 1) + 10 * np.clip(-side, 0, 1) - 28 * (1 - t) ** 3
+        c = np.stack([v * 0.98, v * 0.99, v * 1.02], -1) * (0.75 + 0.25 * light[..., None])
+        spike_col = np.where(m[..., None] & ~spike_mask[..., None], c, spike_col)
+        spike_mask |= m
+# spike outlines (dark pixels just outside each plate) for a crisp, hand-drawn look
+pad = np.pad(spike_mask, 1)
+neigh = pad[:-2, 1:-1] | pad[2:, 1:-1] | pad[1:-1, :-2] | pad[1:-1, 2:]
+spike_outline = neigh & ~spike_mask & inside
+rgb = np.where(spike_mask[..., None], spike_col, rgb)
+rgb = np.where(spike_outline[..., None], rgb * 0.45, rgb)
+# glowing white-blue cracks: jagged lines branching across the shell, with a soft blue halo
+crack = np.zeros((EGG, EGG))
+def crack_line(points):
+    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+        n = int(max(abs(x1 - x0), abs(y1 - y0)) * 2) + 1
+        for i in range(n + 1):
+            px, py = x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n
+            crack[int(py), int(px)] = 1.0
+crack_line([(14, 30), (18, 33), (17, 37), (22, 41), (21, 46), (25, 50)])
+crack_line([(18, 33), (13, 38), (11, 43)])
+crack_line([(48, 24), (45, 28), (47, 32), (43, 37), (45, 42)])
+crack_line([(47, 32), (51, 35)])
+crack_line([(38, 54), (42, 57), (46, 55)])
+crack *= inside & ~spike_mask
+halo = crack.copy()
+for _ in range(3):                                   # cheap blur for the glow halo
+    halo = (halo + np.roll(halo, 1, 0) + np.roll(halo, -1, 0) + np.roll(halo, 1, 1) + np.roll(halo, -1, 1)) / 5 * 1.6
+halo = np.clip(halo, 0, 1) * inside
+rgb = rgb * (1 - 0.6 * halo[..., None]) + halo[..., None] * np.array([90, 170, 255]) * 0.6
+rgb = np.where(crack[..., None] > 0, np.array([235, 248, 255]), rgb)
+# glowing spike tips (a hint of the beam)
+for (by, hw, h) in spikes[1:5]:
+    ty = int(by - h + 1)
+    rgb[ty:ty + 2, 31:33] = np.array([200, 232, 255])
+# dark outline around the whole egg + a soft ground shadow inside the bottom edge
+pad = np.pad(inside, 1)
+edge = inside & ~(pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:])
+rgb = np.where(edge[..., None], np.array([18, 19, 24]), rgb)
+rgb = np.where((inside & (ey > 0.78) & ~edge)[..., None], rgb * 0.8, rgb)
+alpha = np.where(inside, 255, 0)
+egg = Image.fromarray(np.dstack([np.clip(rgb, 0, 255), alpha]).astype(np.uint8), "RGBA")
 os.makedirs(A + "/textures/item", exist_ok=True)
 egg.save(A + "/textures/item/gojira_spawn_egg.png")
 egg.resize((128, 128), Image.NEAREST).save(A + "/icon.png")
