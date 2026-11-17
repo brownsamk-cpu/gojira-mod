@@ -76,7 +76,7 @@ public class GojiraGameTest {
 		}
 	}
 
-	/** Registered as gojiramod:gojira with its spawn egg, roar sound, lang key; a monster that never despawns, breathes underwater and is ~50 blocks tall to look at. */
+	/** Registered as gojiramod:gojira with its spawn egg, roar sound, lang key; a monster that never despawns, breathes underwater and is 164/3 (~54.67) blocks tall to look at. */
 	@GameTest
 	public void gojiraRegistered(GameTestHelper helper) {
 		Gojira g = calmGojira(helper, new BlockPos(1, 2, 1));
@@ -88,8 +88,11 @@ public class GojiraGameTest {
 		helper.assertTrue(g.getMaxHealth() == Gojira.MAX_HEALTH, "max health");
 		helper.assertTrue(g.isPersistenceRequired() && g.requiresCustomPersistence() && !g.removeWhenFarAway(1.0E8), "never despawns");
 		helper.assertTrue(g.canBreatheUnderwater() && g.fireImmune(), "breathes underwater, fireproof");
-		helper.assertTrue(Math.abs(g.getBbHeight() - Gojira.HITBOX_HEIGHT) < 0.01F && Gojira.VISUAL_HEIGHT == 50.0F, "hitbox and 50-block visual size");
-		helper.assertTrue(Math.abs(Gojira.VISUAL_SCALE * 58.09F / 16.0F - 50.0F) < 0.1F, "model scale makes it 50 blocks tall");
+		helper.assertTrue(Math.abs(g.getBbHeight() - Gojira.HITBOX_HEIGHT) < 0.01F && Math.abs(Gojira.VISUAL_HEIGHT - 164.0F / 3.0F) < 1.0E-4F, "hitbox and 164/3-block visual size");
+		helper.assertTrue(Math.abs(Gojira.VISUAL_SCALE * 58.09F / 16.0F - 164.0F / 3.0F) < 0.05F, "model scale makes it 164/3 blocks tall");
+		helper.assertTrue(Math.abs(Gojira.MOUTH_UP - 46.20) < 0.01 && Math.abs(Gojira.MOUTH_FORWARD - 22.69) < 0.01 && Math.abs(Gojira.STOMP_RADIUS - 12.0 * 164.0 / 150.0) < 0.01,
+				"mouth and stomp reach match the bigger size");
+		helper.assertTrue(g.mouthPos().distanceTo(g.position().add(0, 46.20, 0)) > 22.0, "mouth is in front of the body");
 		g.discard();
 		helper.succeed();
 	}
@@ -193,7 +196,7 @@ public class GojiraGameTest {
 				helper.assertTrue(near.getHealth() < near.getMaxHealth(), "the stomp hit the pig near its feet");
 				helper.assertTrue(near.position().subtract(start).horizontalDistance() > 0.5 || near.getDeltaMovement().y > 0.05 || !near.onGround(),
 						"knocked back");
-				helper.assertTrue(far.getHealth() == far.getMaxHealth(), "a pig 20 blocks away is safe");
+				helper.assertTrue(far.getHealth() == far.getMaxHealth(), "a pig ~20 blocks away is safe");
 				helper.assertTrue(padIntact(helper, pad, 14), "no blocks broken");
 				clearPad(helper, pad, 14);
 				helper.succeed();

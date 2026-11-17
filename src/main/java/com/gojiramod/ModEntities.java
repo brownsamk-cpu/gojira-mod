@@ -12,7 +12,7 @@ public final class ModEntities {
 	public static final ResourceKey<EntityType<?>> GOJIRA_KEY = ResourceKey.create(Registries.ENTITY_TYPE, GojiraMod.id("gojira"));
 
 	/**
-	 * Gojira. It LOOKS 50 blocks tall (the model is scaled up in the renderer), but its real hitbox is
+	 * Gojira. It LOOKS 164/3 = 54.67 blocks tall (the model is scaled up in the renderer), but its real hitbox is
 	 * {@link Gojira#HITBOX_WIDTH} x {@link Gojira#HITBOX_HEIGHT} so it can still move, swim and collide without lagging the game.
 	 * No natural spawning: it only comes from its spawn egg (an unbeatable mob that never despawns would pile up otherwise).
 	 */

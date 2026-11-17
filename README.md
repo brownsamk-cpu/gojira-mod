@@ -6,7 +6,7 @@ A separate mod from the Horror Mod.
 ## Gojira (`gojiramod:gojira`)
 - A giant, dark grey, dinosaur-like kaiju that stands on two legs, with a long swaying tail, small arms, a long-snouted head
   and three rows of pale spikes down its back. Blocky Minecraft style, original design and textures.
-- **50 blocks tall** ("50 meters", and 1 block = 1 meter). Nose to tail tip it is about 70 blocks long.
+- **164/3 = 54.67 blocks tall** (0.1.2; it was 50 before; 1 block = 1 meter). Nose to tail tip it is about 76 blocks long.
 - **Always angry** at players in survival/adventure (creative and spectator players are ignored, like with any monster).
   It notices you up to 64 blocks away.
 - **Can't be beaten.** It has 1000 health and heals 40 health every second (2 per tick), much faster than anyone can hurt it,
@@ -14,7 +14,7 @@ A separate mod from the Horror Mod.
 - **Never despawns.**
 - **Lives in the ocean.** It breathes underwater, walks along the sea floor at full speed, swims up to the surface when it's
   chasing you, and wades onto land (it can step up 2.5 blocks).
-- **Stomp**: if you're near its feet (within 12 blocks), it lifts a foot and slams it down. That does 3 hearts of damage
+- **Stomp**: if you're near its feet (within about 13 blocks), it lifts a foot and slams it down. That does 3 hearts of damage
   (on Normal), knocks you away, throws up dust and clouds, and shakes your screen a little.
 - **White beam**: if you're farther away and it can see you, its spikes glow white and it roars for 2 seconds. Then it
   breathes a glowing white beam from its mouth for about 2.4 seconds. The beam does 1.5 hearts per pulse (4 pulses) to
@@ -35,10 +35,10 @@ A separate mod from the Horror Mod.
 - Players in creative mode are ignored.
 
 ### Size and performance tradeoffs
-- The 50-block size is only how it **looks**. The renderer scales the model up about 13.8 times. Its real hitbox is
-  **6 x 16 blocks**, because a 50-block hitbox couldn't fit through the world and would make collision checks very slow.
-  The stomp and beam are measured from where the big model's feet and mouth are (mouth about 42 blocks up and 21 blocks
-  in front), not from the hitbox. The catch: you can only hit it in the 6 x 16 area around its legs and lower body.
+- The 54.67-block size is only how it **looks**. The renderer scales the model up about 15.1 times. Its real hitbox is
+  **6 x 16 blocks**, because a 55-block hitbox couldn't fit through the world and would make collision checks very slow.
+  The stomp and beam are measured from where the big model's feet and mouth are (mouth about 46.2 blocks up and 22.7 blocks
+  in front; stomp reach about 13.1 blocks), not from the hitbox. The catch: you can only hit it in the 6 x 16 area around its legs and lower body.
 - It doesn't use pathfinding, which is slow and unreliable for a mob that wide. It walks straight at you and sidesteps when
   it bumps into something. In thick forests or narrow valleys it can get stuck.
 - Render culling uses a box the size of the model, so it doesn't pop out of view when its feet are off screen. Server

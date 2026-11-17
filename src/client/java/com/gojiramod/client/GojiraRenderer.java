@@ -18,8 +18,8 @@ public class GojiraRenderer extends MobRenderer<Gojira, GojiraRenderState, Gojir
 	private static final Identifier TEXTURE = GojiraMod.id("textures/entity/gojira.png");
 	private static final Identifier GLOW = GojiraMod.id("textures/entity/gojira_glow.png");
 	private static final float SCALE = Gojira.VISUAL_HEIGHT / (GojiraModelLayer.MODEL_HEIGHT_PX / 16.0F);
-	/** How far the scaled model reaches from its feet (tail tip ~49 blocks behind, snout ~21 in front, ~12 to each side). */
-	private static final double VISUAL_REACH = 50.0;
+	/** How far the scaled model reaches from its feet (tail tip ~53.3 blocks behind, snout ~22.7 in front, ~13.3 to each side). */
+	private static final double VISUAL_REACH = 55.0;
 
 	public GojiraRenderer(final EntityRendererProvider.Context context) {
 		super(context, new GojiraModel(context.bakeLayer(GojiraModel.LAYER)), 8.0F);

@@ -54,7 +54,7 @@ import org.jspecify.annotations.Nullable;
  * whatever it touches). It never breaks blocks.
  *
  * <p>Size: the model is drawn {@link #VISUAL_HEIGHT} blocks tall but the real hitbox is only {@link #HITBOX_WIDTH} x
- * {@link #HITBOX_HEIGHT} (a 50-block hitbox couldn't move through the world and would be very laggy). Attacks are measured from
+ * {@link #HITBOX_HEIGHT} (a 55-block hitbox couldn't move through the world and would be very laggy). Attacks are measured from
  * where the visual feet and mouth are, not from the hitbox.
  *
  * <p>Grown-up off switches: {@code /kill @e[type=gojiramod:gojira]} still works (it bypasses the "can't be beaten" rule),
@@ -62,10 +62,13 @@ import org.jspecify.annotations.Nullable;
  */
 public class Gojira extends Monster {
 	// ---- size (VISUAL_SCALE, MOUTH_UP and MOUTH_FORWARD are printed by tools/gojira.py) ----
-	public static final float VISUAL_HEIGHT = 50.0F;
-	public static final float VISUAL_SCALE = 13.773F;
+	/** 0.1.2: 164/3 = 54.6667 blocks tall to look at (it was 50 in 0.1.0/0.1.1). */
+	public static final float VISUAL_HEIGHT = 164.0F / 3.0F;
+	/** How much bigger than the original 50-block design (used to scale the attack reach and effects). */
+	public static final float SIZE_FACTOR = VISUAL_HEIGHT / 50.0F;
+	public static final float VISUAL_SCALE = 15.058F;
 	public static final float HITBOX_WIDTH = 6.0F, HITBOX_HEIGHT = 16.0F;
-	public static final double MOUTH_UP = 42.25, MOUTH_FORWARD = 20.75;
+	public static final double MOUTH_UP = 46.20, MOUTH_FORWARD = 22.69;
 
 	// ---- can't be beaten ----
 	public static final float MAX_HEALTH = 1000.0F;
@@ -74,7 +77,8 @@ public class Gojira extends Monster {
 	public static final float REGEN_PER_TICK = 2.0F;
 
 	// ---- stomp ----
-	public static final double STOMP_RADIUS = 12.0;
+	/** Reaches the visual feet: 12 blocks at the old 50-block size, ~13.1 now. */
+	public static final double STOMP_RADIUS = 12.0 * SIZE_FACTOR;
 	public static final float STOMP_DAMAGE = 6.0F; // 3 hearts on Normal
 	public static final int STOMP_WINDUP = 16, STOMP_COOLDOWN = 50;
 
@@ -276,7 +280,7 @@ public class Gojira extends Monster {
 			// wind-up: white sparks rise off the glowing spikes and gather at the mouth
 			float yaw = this.yBodyRot * Mth.DEG_TO_RAD;
 			for (int i = 0; i < 3; i++) {
-				double back = this.random.nextDouble() * 12.0, up = 12.0 + this.random.nextDouble() * 22.0;
+				double back = this.random.nextDouble() * 12.0 * SIZE_FACTOR, up = (12.0 + this.random.nextDouble() * 22.0) * SIZE_FACTOR;
 				level.sendParticles(ParticleTypes.END_ROD, true, false, this.getX() + Mth.sin(yaw) * back, this.getY() + up, this.getZ() - Mth.cos(yaw) * back,
 						1, 1.0, 1.0, 1.0, 0.02);
 			}
@@ -333,7 +337,7 @@ public class Gojira extends Monster {
 
 	public void roar() {
 		this.roars++;
-		this.level().playSound(null, this.getX(), this.getY() + 30.0, this.getZ(), ModSounds.GOJIRA_ROAR, SoundSource.HOSTILE, ROAR_VOLUME,
+		this.level().playSound(null, this.getX(), this.getY() + 30.0 * SIZE_FACTOR, this.getZ(), ModSounds.GOJIRA_ROAR, SoundSource.HOSTILE, ROAR_VOLUME,
 				0.92F + this.random.nextFloat() * 0.12F);
 		this.level().broadcastEntityEvent(this, EVENT_ROAR);
 	}
