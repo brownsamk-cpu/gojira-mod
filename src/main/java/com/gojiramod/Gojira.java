@@ -61,14 +61,14 @@ import org.jspecify.annotations.Nullable;
  * and switching to Peaceful removes it like any other monster.
  */
 public class Gojira extends Monster {
-	// ---- size (VISUAL_SCALE, MOUTH_UP and MOUTH_FORWARD are printed by tools/gojira.py) ----
+	// ---- size (measured from the model data by tools/gojira.py, see GojiraDimensions) ----
 	/** 0.1.2: 164/3 = 54.6667 blocks tall to look at (it was 50 in 0.1.0/0.1.1). */
-	public static final float VISUAL_HEIGHT = 164.0F / 3.0F;
+	public static final float VISUAL_HEIGHT = GojiraDimensions.VISUAL_HEIGHT;
 	/** How much bigger than the original 50-block design (used to scale the attack reach and effects). */
 	public static final float SIZE_FACTOR = VISUAL_HEIGHT / 50.0F;
-	public static final float VISUAL_SCALE = 15.058F;
+	public static final float VISUAL_SCALE = GojiraDimensions.VISUAL_SCALE;
 	public static final float HITBOX_WIDTH = 6.0F, HITBOX_HEIGHT = 16.0F;
-	public static final double MOUTH_UP = 46.20, MOUTH_FORWARD = 22.69;
+	public static final double MOUTH_UP = GojiraDimensions.MOUTH_UP, MOUTH_FORWARD = GojiraDimensions.MOUTH_FORWARD;
 
 	// ---- can't be beaten ----
 	public static final float MAX_HEALTH = 1000.0F;
@@ -77,8 +77,8 @@ public class Gojira extends Monster {
 	public static final float REGEN_PER_TICK = 2.0F;
 
 	// ---- stomp ----
-	/** Reaches the visual feet: 12 blocks at the old 50-block size, ~13.1 now. */
-	public static final double STOMP_RADIUS = 12.0 * SIZE_FACTOR;
+	/** Reaches past the visual feet and toes (12 blocks at the old 50-block size, ~13.1 now; the toes reach ~12.6). */
+	public static final double STOMP_RADIUS = Math.max(12.0 * SIZE_FACTOR, GojiraDimensions.FEET_REACH + 0.5);
 	public static final float STOMP_DAMAGE = 6.0F; // 3 hearts on Normal
 	public static final int STOMP_WINDUP = 16, STOMP_COOLDOWN = 50;
 

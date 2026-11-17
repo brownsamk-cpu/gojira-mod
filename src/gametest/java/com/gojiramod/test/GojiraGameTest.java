@@ -89,10 +89,13 @@ public class GojiraGameTest {
 		helper.assertTrue(g.isPersistenceRequired() && g.requiresCustomPersistence() && !g.removeWhenFarAway(1.0E8), "never despawns");
 		helper.assertTrue(g.canBreatheUnderwater() && g.fireImmune(), "breathes underwater, fireproof");
 		helper.assertTrue(Math.abs(g.getBbHeight() - Gojira.HITBOX_HEIGHT) < 0.01F && Math.abs(Gojira.VISUAL_HEIGHT - 164.0F / 3.0F) < 1.0E-4F, "hitbox and 164/3-block visual size");
-		helper.assertTrue(Math.abs(Gojira.VISUAL_SCALE * 58.09F / 16.0F - 164.0F / 3.0F) < 0.05F, "model scale makes it 164/3 blocks tall");
-		helper.assertTrue(Math.abs(Gojira.MOUTH_UP - 46.20) < 0.01 && Math.abs(Gojira.MOUTH_FORWARD - 22.69) < 0.01 && Math.abs(Gojira.STOMP_RADIUS - 12.0 * 164.0 / 150.0) < 0.01,
+		helper.assertTrue(Math.abs(Gojira.VISUAL_SCALE * com.gojiramod.GojiraDimensions.MODEL_HEIGHT_PX / 16.0F - 164.0F / 3.0F) < 0.01F, "model scale makes it 164/3 blocks tall");
+		helper.assertTrue(Gojira.MOUTH_UP > 40.0 && Gojira.MOUTH_UP < Gojira.VISUAL_HEIGHT && Gojira.MOUTH_FORWARD > 15.0 && Gojira.MOUTH_FORWARD <= com.gojiramod.GojiraDimensions.FRONT_REACH
+				&& Gojira.STOMP_RADIUS > com.gojiramod.GojiraDimensions.FEET_REACH && Gojira.STOMP_RADIUS >= 12.0 * 164.0 / 150.0 - 0.01,
 				"mouth and stomp reach match the bigger size");
-		helper.assertTrue(g.mouthPos().distanceTo(g.position().add(0, 46.20, 0)) > 22.0, "mouth is in front of the body");
+		helper.assertTrue(g.mouthPos().distanceTo(g.position().add(0, Gojira.MOUTH_UP, 0)) > 15.0, "mouth is in front of the body");
+		helper.assertTrue(com.gojiramod.GojiraDimensions.CUBES >= 250 && com.gojiramod.GojiraDimensions.DORSAL_PLATES >= 30 && com.gojiramod.GojiraDimensions.PARTS >= 50,
+				"detailed model: lots of cubes, parts and dorsal plates");
 		g.discard();
 		helper.succeed();
 	}

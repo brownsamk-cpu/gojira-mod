@@ -1,6 +1,7 @@
 package com.gojiramod.client;
 
 import com.gojiramod.Gojira;
+import com.gojiramod.GojiraDimensions;
 import com.gojiramod.GojiraMod;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -17,9 +18,9 @@ import net.minecraft.world.phys.AABB;
 public class GojiraRenderer extends MobRenderer<Gojira, GojiraRenderState, GojiraModel> {
 	private static final Identifier TEXTURE = GojiraMod.id("textures/entity/gojira.png");
 	private static final Identifier GLOW = GojiraMod.id("textures/entity/gojira_glow.png");
-	private static final float SCALE = Gojira.VISUAL_HEIGHT / (GojiraModelLayer.MODEL_HEIGHT_PX / 16.0F);
-	/** How far the scaled model reaches from its feet (tail tip ~53.3 blocks behind, snout ~22.7 in front, ~13.3 to each side). */
-	private static final double VISUAL_REACH = 55.0;
+	private static final float SCALE = Gojira.VISUAL_HEIGHT / (GojiraDimensions.MODEL_HEIGHT_PX / 16.0F);
+	/** How far the scaled model reaches from its center (the tail tip is the farthest, ~60 blocks), plus a little margin. */
+	private static final double VISUAL_REACH = Math.max(GojiraDimensions.TAIL_REACH, Math.max(GojiraDimensions.FRONT_REACH, GojiraDimensions.HALF_WIDTH)) + 2.0;
 
 	public GojiraRenderer(final EntityRendererProvider.Context context) {
 		super(context, new GojiraModel(context.bakeLayer(GojiraModel.LAYER)), 8.0F);

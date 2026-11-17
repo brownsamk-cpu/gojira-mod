@@ -4,9 +4,10 @@ A Fabric mod for Minecraft 26.3 (Fabric Loader 0.19.5, Fabric API 0.163.0+26.3, 
 A separate mod from the Horror Mod.
 
 ## Gojira (`gojiramod:gojira`)
-- A giant, dark grey, dinosaur-like kaiju that stands on two legs, with a long swaying tail, small arms, a long-snouted head
-  and three rows of pale spikes down its back. Blocky Minecraft style, original design and textures.
-- **164/3 = 54.67 blocks tall** (0.1.2; it was 50 before; 1 block = 1 meter). Nose to tail tip it is about 76 blocks long.
+- A giant, charcoal-grey, dinosaur-like kaiju that stands upright on thick legs, with short clawed arms, a thick neck, a
+  big rounded head and a long swaying tail. Three rows of jagged, pale, maple-leaf-shaped plates run down its back.
+  Blocky Minecraft style, original design and textures.
+- **164/3 = 54.67 blocks tall** (0.1.2; it was 50 before; 1 block = 1 meter). Nose to tail tip it is about 79 blocks long.
 - **Always angry** at players in survival/adventure (creative and spectator players are ignored, like with any monster).
   It notices you up to 64 blocks away.
 - **Can't be beaten.** It has 1000 health and heals 40 health every second (2 per tick), much faster than anyone can hurt it,
@@ -28,6 +29,16 @@ A separate mod from the Horror Mod.
 - 0.1.1: the spawn egg is "super detailed": a 64x64 custom texture with a dark grey scaly shell, pale spikes up the
   middle, glowing white-blue cracks, a highlight and a rim light. It uses its own item model, not the tinted vanilla
   spawn-egg template.
+- 0.1.3: a much more detailed model and skin. It has 60 moving parts and 326 cubes:
+  - a layered head with a heavy brow, nostrils, amber slit-pupil eyes, rows of teeth and a hinged jaw;
+  - a thick neck, a barrel chest with belly ridges, and short arms with a forearm and four claws on each hand;
+  - thighs, knees, shins and wide feet with clawed toes;
+  - a six-segment tail that tapers to the tip;
+  - 37 jagged plates in 3 rows.
+
+  The skin texture is 4x higher resolution (1024 x 512). It has bumpy charcoal scales with shading and crevices, and pale
+  striated plates. The walk now bends the knees and swings the forearms, the stomp tucks the shin up, and all six tail
+  segments sway.
 
 ### Grown-up off switches
 - `/kill @e[type=gojiramod:gojira]` still works, because `/kill` bypasses the "can't be beaten" rule.
@@ -35,22 +46,24 @@ A separate mod from the Horror Mod.
 - Players in creative mode are ignored.
 
 ### Size and performance tradeoffs
-- The 54.67-block size is only how it **looks**. The renderer scales the model up about 15.1 times. Its real hitbox is
+- The 54.67-block size is only how it **looks**. The renderer scales the model up about 13.9 times. Its real hitbox is
   **6 x 16 blocks**, because a 55-block hitbox couldn't fit through the world and would make collision checks very slow.
-  The stomp and beam are measured from where the big model's feet and mouth are (mouth about 46.2 blocks up and 22.7 blocks
-  in front; stomp reach about 13.1 blocks), not from the hitbox. The catch: you can only hit it in the 6 x 16 area around its legs and lower body.
+  The stomp and beam are measured from where the big model's feet and mouth are (mouth about 45.3 blocks up and 19.1 blocks
+  in front; the toes reach about 12.6 blocks, the stomp about 13.1), not from the hitbox. The catch: you can only hit it in the 6 x 16 area around its legs and lower body.
 - It doesn't use pathfinding, which is slow and unreliable for a mob that wide. It walks straight at you and sidesteps when
   it bumps into something. In thick forests or narrow valleys it can get stuck.
 - Render culling uses a box the size of the model, so it doesn't pop out of view when its feet are off screen. Server
   tracking range is 16 chunks, but your view distance still limits how far away you can see it.
 - The beam sends up to about 80 particle packets every other tick while it fires, and they show up to 512 blocks away
   because the mouth is so high. It only fires for about 2.4 seconds at a time.
+- The 0.1.3 model has 326 cubes (about 2,000 faces). That's a lot for one mob, but it's fine for one or a few Gojiras.
+  Spawning dozens at once may slow down older computers.
 - **No natural spawning**: a mob that can't be beaten and never despawns would pile up in the oceans over time.
 
 ## Files
 - `tools/gojira.py` generates everything from data: the model boxes (`GojiraModelLayer.java`), the textures (skin, spike
-  glow, spawn egg, icon) and the roar `.ogg`. It also prints the model scale and mouth position used in `Gojira.java`.
-- Build: `./gradlew build` runs 12 game tests (registration, detailed egg texture, can't die, regen outpaces damage, `/kill` off switch, stomp,
+  glow, spawn egg, icon) and the roar `.ogg`. It also measures the model and writes `GojiraDimensions.java` (scale, mouth, feet, reach), which `Gojira.java` and the renderer use.
+- Build: `./gradlew build` runs 12 game tests (registration and model size/detail, detailed egg texture, can't die, regen outpaces damage, `/kill` off switch, stomp,
   beam hits, wall blocks the beam, boss bar, always hostile, no drowning).
 
 License: CC0.
