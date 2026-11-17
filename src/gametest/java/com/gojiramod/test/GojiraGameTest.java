@@ -12,7 +12,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.animal.cow.Cow;
 import net.minecraft.world.entity.animal.pig.Pig;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.monster.zombie.Husk;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.block.Block;
@@ -61,7 +63,7 @@ public class GojiraGameTest {
 
 	private static void clearPad(GameTestHelper helper, BlockPos top, int radius) {
 		BlockPos base = top.below();
-		helper.getLevel().getEntitiesOfClass(Entity.class, AABB.encapsulatingFullBlocks(base.offset(-radius - 4, -4, -radius - 4), base.offset(radius + 4, 60, radius + 4)),
+		helper.getLevel().getEntitiesOfClass(Entity.class, AABB.encapsulatingFullBlocks(base.offset(-radius - 4, -4, -radius - 4), base.offset(radius + 4, 20, radius + 4)), // only this pad's height band: other tests are 30 blocks up or down
 				e -> !(e instanceof ServerPlayer)).forEach(Entity::discard);
 		for (BlockPos p : BlockPos.betweenClosed(base.offset(-radius, 0, -radius), base.offset(radius, 0, radius))) {
 			helper.getLevel().setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
@@ -172,12 +174,24 @@ public class GojiraGameTest {
 	}
 
 	/** The grown-up off switch: /kill (which bypasses invulnerability) still removes it. */
-	@GameTest(maxTicks = 60)
+	@GameTest(maxTicks = 200)
 	public void killCommandStillWorks(GameTestHelper helper) {
 		Gojira g = calmGojira(helper, new BlockPos(1, 2, 1));
+		helper.assertTrue(!g.isKaijuSwimming(), "not swimming on land");
 		g.kill(helper.getLevel());
 		helper.assertTrue(g.isDeadOrDying(), "/kill works");
-		helper.succeedWhen(() -> helper.assertTrue(g.isRemoved(), "gone after the death animation"));
+		helper.runAfterDelay(30, () -> {
+			// vanilla mobs vanish 20 ticks after dying; Gojira is still slowly toppling over
+			helper.assertTrue(!g.isRemoved() && g.isDeadOrDying() && g.deathTime >= 25, "still playing the death animation");
+			helper.assertTrue(Gojira.toppleDegrees(g.deathTime) > 10.0F && Gojira.toppleDegrees(g.deathTime) < 90.0F, "partway through toppling over");
+			helper.assertTrue(g.getDeathDustBursts() > 0, "dust flies up from its feet");
+			helper.assertTrue(g.getHealth() <= 0.0F, "doesn't regenerate while dying");
+		});
+		helper.succeedWhen(() -> {
+			helper.assertTrue(g.isRemoved(), "gone after the death animation");
+			helper.assertTrue(g.deathTime >= Gojira.DEATH_TICKS && Gojira.toppleDegrees(g.deathTime) == 90.0F, "it toppled all the way over first");
+			helper.assertTrue(g.getDeathDustBursts() >= Gojira.TOPPLE_TICKS / 4, "a big crash of dust when it hits the ground");
+		});
 	}
 
 	/** Stomp: hurts and knocks back something near its feet, makes no holes in the ground. */
@@ -195,7 +209,7 @@ public class GojiraGameTest {
 			g.startStomp();
 			helper.assertTrue(g.getStomps() == 0, "the foot is still in the air during the wind-up");
 			helper.runAfterDelay(Gojira.STOMP_WINDUP + 3, () -> {
-				helper.assertTrue(g.getStomps() == 1, "stomped");
+				helper.assertTrue(g.getStomps() == 1, "stomped (stomps=" + g.getStomps() + ", removed=" + g.isRemoved() + ", y=" + g.getY() + ", pad=" + pad.getY() + ")");
 				helper.assertTrue(near.getHealth() < near.getMaxHealth(), "the stomp hit the pig near its feet");
 				helper.assertTrue(near.position().subtract(start).horizontalDistance() > 0.5 || near.getDeltaMovement().y > 0.05 || !near.onGround(),
 						"knocked back");
@@ -323,6 +337,71 @@ public class GojiraGameTest {
 		});
 	}
 
+	/** Claw swipe hits what's in front of it (not behind), and the tail whip hits what's behind it. */
+	@GameTest(maxTicks = 100)
+	public void meleeAttacksHurt(GameTestHelper helper) {
+		BlockPos pad = skyPad(helper, 50, 20);
+		Gojira g = calmGojira(helper, new BlockPos(1, 2, 1));
+		Pig front = helper.spawnWithNoFreeWill(EntityTypes.PIG, new BlockPos(1, 2, 2));
+		Pig back = helper.spawnWithNoFreeWill(EntityTypes.PIG, new BlockPos(2, 2, 1));
+		moveTo(g, pad, 0); // faces south (+z)
+		moveTo(front, pad.south(10), 0);
+		moveTo(back, pad.north(14), 0);
+		helper.runAfterDelay(2, () -> {
+			helper.assertTrue(g.isInFront(front) && !g.isInFront(back), "one pig in front, one behind");
+			g.startSwipe();
+			helper.assertTrue(g.getSwipes() == 0 && front.getHealth() == front.getMaxHealth(), "the arm is still winding up");
+			helper.runAfterDelay(Gojira.SWIPE_WINDUP + 2, () -> {
+				helper.assertTrue(g.getSwipes() == 1 && front.getHealth() < front.getMaxHealth(), "the claw swipe hit the pig in front");
+				helper.assertTrue(front.getHealth() > 0.0F, "moderate damage: a pig survives one swipe");
+				helper.assertTrue(back.getHealth() == back.getMaxHealth(), "the swipe doesn't hit behind it");
+				g.startWhip();
+				helper.runAfterDelay(Gojira.WHIP_WINDUP + 2, () -> {
+					helper.assertTrue(g.getWhips() == 1 && back.getHealth() < back.getMaxHealth(), "the tail whip hit the pig behind");
+					helper.assertTrue(g.getMeleeHits() == 2, "two melee hits");
+					helper.assertTrue(padIntact(helper, pad, 20), "no blocks broken");
+					clearPad(helper, pad, 20);
+					helper.succeed();
+				});
+			});
+		});
+	}
+
+	/** On its own it picks the claw swipe for a target just out of stomp reach in front of it. */
+	@GameTest(maxTicks = 100)
+	public void swipesWhenClose(GameTestHelper helper) {
+		BlockPos pad = skyPad(helper, 110, 20);
+		Gojira g = calmGojira(helper, new BlockPos(1, 2, 1));
+		Pig pig = helper.spawnWithNoFreeWill(EntityTypes.PIG, new BlockPos(1, 2, 2));
+		moveTo(g, pad, 0);
+		moveTo(pig, pad.south(16), 0);
+		helper.runAfterDelay(2, () -> g.setTarget(pig));
+		helper.succeedWhen(() -> {
+			helper.assertTrue(g.getSwipes() >= 1 && pig.getHealth() < pig.getMaxHealth(), "swiped the pig");
+			helper.assertTrue(g.getBeamPulses() == 0 && g.getStomps() == 0, "used the swipe (not the beam or a stomp)");
+			clearPad(helper, pad, 20);
+		});
+	}
+
+	/** Angry at every living mob, not just players: goes for the nearest cow, ignoring armor stands and other Gojiras. */
+	@GameTest(maxTicks = 100)
+	public void targetsNearbyMobs(GameTestHelper helper) {
+		BlockPos pad = skyPad(helper, 170, 12);
+		Gojira g = helper.spawn(ModEntities.GOJIRA, new BlockPos(1, 2, 1));
+		Gojira other = calmGojira(helper, new BlockPos(2, 2, 1));
+		ArmorStand stand = helper.spawn(EntityTypes.ARMOR_STAND, new BlockPos(1, 2, 2));
+		Cow cow = helper.spawnWithNoFreeWill(EntityTypes.COW, new BlockPos(1, 2, 3));
+		moveTo(g, pad, 0);
+		moveTo(other, pad.west(9), 0);
+		moveTo(stand, pad.east(4), 0);
+		moveTo(cow, pad.north(7), 0);
+		helper.assertTrue(Gojira.isPrey(cow) && !Gojira.isPrey(stand) && !Gojira.isPrey(other), "cows are prey; armor stands and Gojiras are not");
+		helper.succeedWhen(() -> {
+			helper.assertTrue(g.getTarget() == cow, "targets the nearby cow");
+			clearPad(helper, pad, 12);
+		});
+	}
+
 	/** Lives in the ocean: underwater it doesn't drown or lose air. */
 	@GameTest(maxTicks = 80)
 	public void breathesUnderwater(GameTestHelper helper) {
@@ -336,6 +415,7 @@ public class GojiraGameTest {
 		int air = g.getAirSupply();
 		helper.runAfterDelay(60, () -> {
 			helper.assertTrue(g.isInWater(), "in the water");
+			helper.assertTrue(g.isKaijuSwimming(), "deep water: it swims (the swim animation flag is on)");
 			helper.assertTrue(g.getAirSupply() >= air && g.getHealth() == g.getMaxHealth(), "no drowning");
 			g.discard();
 			for (BlockPos p : BlockPos.betweenClosed(base.offset(-4, 0, -4), base.offset(4, 18, 4))) {

@@ -9,4 +9,10 @@ public class GojiraRenderState extends LivingEntityRenderState {
 	public float spikeGlow;
 	/** 0..1 how far the jaw is open (roar / beam). */
 	public float jawOpen;
+	/** 0..1 swimming (body flat, tail sweeping, legs kicking, arms tucked). */
+	public float swimAmount;
+	/** 0..1 through a claw swipe / tail whip (0 = not attacking). */
+	public float swipeProgress, whipProgress;
+	/** 0..1 through the death animation, and the death time in ticks (vanilla's own deathTime is zeroed so it doesn't flip it). */
+	public float deathProgress, deathTicks;
 }

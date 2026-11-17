@@ -14,6 +14,8 @@ public final class GojiraDimensions {
 	public static final double FEET_REACH = 12.592;
 	/** How far the drawn model reaches from its center: snout, tail tip, half width (blocks). */
 	public static final double FRONT_REACH = 19.400, TAIL_REACH = 59.995, HALF_WIDTH = 12.773;
+	/** Half the width of its chest, in blocks: how high its body rests when it lies on its side (death animation). */
+	public static final double BODY_HALF_WIDTH = 9.149;
 	/** Number of model parts and cubes (for the tests). */
 	public static final int PARTS = 60, CUBES = 326, DORSAL_PLATES = 37;
 

@@ -8,8 +8,9 @@ A separate mod from the Horror Mod.
   big rounded head and a long swaying tail. Three rows of jagged, pale, maple-leaf-shaped plates run down its back.
   Blocky Minecraft style, original design and textures.
 - **164/3 = 54.67 blocks tall** (0.1.2; it was 50 before; 1 block = 1 meter). Nose to tail tip it is about 79 blocks long.
-- **Always angry** at players in survival/adventure (creative and spectator players are ignored, like with any monster).
-  It notices you up to 64 blocks away.
+- **Always angry at every living thing** (0.1.4): animals, monsters, villagers, other mobs, and players in
+  survival/adventure. It goes for whichever is **nearest**, up to 64 blocks away. It ignores creative and spectator players,
+  other Gojiras, and armor stands.
 - **Can't be beaten.** It has 1000 health and heals 40 health every second (2 per tick), much faster than anyone can hurt it,
   and its health can never go below 1. A boss bar called **Gojira** shows within 96 blocks.
 - **Never despawns.**
@@ -17,6 +18,10 @@ A separate mod from the Horror Mod.
   chasing you, and wades onto land (it can step up 2.5 blocks).
 - **Stomp**: if you're near its feet (within about 13 blocks), it lifts a foot and slams it down. That does 3 hearts of damage
   (on Normal), knocks you away, throws up dust and clouds, and shakes your screen a little.
+- **Claw swipe** (0.1.4): if something is in front of it (within 18 blocks) and the stomp isn't ready, it raises its right
+  arm and rakes its claws down and across. It does 2.5 hearts (on Normal) and knocks things back.
+- **Tail whip** (0.1.4): if something is behind it (within 26 blocks), it coils its tail to one side and lashes it across. It
+  does 2 hearts and flings things sideways. Each melee attack has a 1.5-second cooldown.
 - **White beam**: if you're farther away and it can see you, its spikes glow white and it roars for 2 seconds. Then it
   breathes a glowing white beam from its mouth for about 2.4 seconds. The beam does 1.5 hearts per pulse (4 pulses) to
   everything it touches. The aim follows you slowly, so you can run sideways to dodge it, and walls block it. After that
@@ -40,8 +45,18 @@ A separate mod from the Horror Mod.
   striated plates. The walk now bends the knees and swings the forearms, the stomp tucks the shin up, and all six tail
   segments sway.
 
+- 0.1.4 animations:
+  - **Swimming** in deep water: its body tips flat like a crocodile, its head lifts, waves run down its tail in big
+    side-to-side sweeps, its legs kick, and its arms tuck in.
+  - **Claw swipe** and **tail whip** (see above), plus the stomp and beam wind-ups as before.
+  - **Death**, only from `/kill` or the void: it lets out a last roar with its plates flaring white. Then its knees buckle
+    and it slowly topples onto its side like a falling tree (3 seconds). Its plates' glow fades, and dust flies up from its
+    feet and in a long line where it crashes down. It lies still for 2 seconds, then disappears in a puff. It never turns
+    red.
+
 ### Grown-up off switches
-- `/kill @e[type=gojiramod:gojira]` still works, because `/kill` bypasses the "can't be beaten" rule.
+- `/kill @e[type=gojiramod:gojira]` still works, because `/kill` bypasses the "can't be beaten" rule. It plays the
+  5-second death animation, then it's gone.
 - Switching the world to **Peaceful** removes it, like any other monster.
 - Players in creative mode are ignored.
 
@@ -63,7 +78,12 @@ A separate mod from the Horror Mod.
 ## Files
 - `tools/gojira.py` generates everything from data: the model boxes (`GojiraModelLayer.java`), the textures (skin, spike
   glow, spawn egg, icon) and the roar `.ogg`. It also measures the model and writes `GojiraDimensions.java` (scale, mouth, feet, reach), which `Gojira.java` and the renderer use.
-- Build: `./gradlew build` runs 12 game tests (registration and model size/detail, detailed egg texture, can't die, regen outpaces damage, `/kill` off switch, stomp,
-  beam hits, wall blocks the beam, boss bar, always hostile, no drowning).
+- Build: `./gradlew build` runs 15 game tests:
+  - registration and model size/detail, and the detailed egg texture;
+  - can't die, regen outpaces damage, and the `/kill` off switch with its death animation;
+  - stomp, claw swipe and tail whip, and picking the swipe on its own;
+  - beam hits, and a wall blocks the beam;
+  - boss bar, always hostile to players, and targets the nearest mob (not armor stands or other Gojiras);
+  - no drowning, and the swim flag in deep water.
 
 License: CC0.
