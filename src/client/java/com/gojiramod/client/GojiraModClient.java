@@ -2,6 +2,8 @@ package com.gojiramod.client;
 
 import com.gojiramod.Gojira;
 import com.gojiramod.ModEntities;
+import com.gojiramod.ShowaGodzilla;
+import net.minecraft.world.entity.Entity;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -14,21 +16,27 @@ public class GojiraModClient implements ClientModInitializer {
 	private static int shakeTicks;
 	private static float shakeStrength, appliedX, appliedY;
 
+	/** A little camera shake when a kaiju's stomp lands near you. */
+	private static void stompShake(final Entity kaiju) {
+		LocalPlayer player = Minecraft.getInstance().player;
+		if (player == null) {
+			return;
+		}
+		double d = player.distanceTo(kaiju);
+		if (d < 48.0) {
+			shakeTicks = 12;
+			shakeStrength = (float) (1.6 * (1.0 - d / 48.0)) + 0.3F;
+		}
+	}
+
 	@Override
 	public void onInitializeClient() {
 		ModelLayerRegistry.registerModelLayer(GojiraModel.LAYER, GojiraModel::createBodyLayer);
 		EntityRendererRegistry.register(ModEntities.GOJIRA, GojiraRenderer::new);
-		Gojira.clientStompLanded = gojira -> {
-			LocalPlayer player = Minecraft.getInstance().player;
-			if (player == null) {
-				return;
-			}
-			double d = player.distanceTo(gojira);
-			if (d < 48.0) {
-				shakeTicks = 12;
-				shakeStrength = (float) (1.6 * (1.0 - d / 48.0)) + 0.3F;
-			}
-		};
+		ModelLayerRegistry.registerModelLayer(ShowaGodzillaModel.LAYER, ShowaGodzillaModel::createBodyLayer);
+		EntityRendererRegistry.register(ModEntities.SHOWA_GODZILLA, ShowaGodzillaRenderer::new);
+		Gojira.clientStompLanded = GojiraModClient::stompShake;
+		ShowaGodzilla.clientStompLanded = GojiraModClient::stompShake;
 		// gentle shake: nudges the view a little each tick and always takes the previous nudge back, so it ends where it started
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			if (mc.player == null || mc.isPaused()) {

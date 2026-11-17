@@ -6,7 +6,8 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
-      "com.gojiramod.test.GojiraGameTest"
+      "com.gojiramod.test.GojiraGameTest",
+      "com.gojiramod.test.ShowaGodzillaGameTest"
     ],
     "fabric-client-gametest": [
       "com.gojiramod.test.GojiraScreenshots"

@@ -19,18 +19,28 @@ public final class ModItems {
 	public static final Item GOJIRA_SPAWN_EGG = Registry.register(BuiltInRegistries.ITEM, GOJIRA_SPAWN_EGG_KEY,
 			new SpawnEggItem(new Item.Properties().spawnEgg(ModEntities.GOJIRA).setId(GOJIRA_SPAWN_EGG_KEY)));
 
+	public static final ResourceKey<Item> SHOWA_GODZILLA_SPAWN_EGG_KEY = ResourceKey.create(Registries.ITEM, GojiraMod.id("showa_godzilla_spawn_egg"));
+	public static final Item SHOWA_GODZILLA_SPAWN_EGG = Registry.register(BuiltInRegistries.ITEM, SHOWA_GODZILLA_SPAWN_EGG_KEY,
+			new SpawnEggItem(new Item.Properties().spawnEgg(ModEntities.SHOWA_GODZILLA).setId(SHOWA_GODZILLA_SPAWN_EGG_KEY)));
+
 	/** The Gojira Mod creative tab. */
 	public static final ResourceKey<CreativeModeTab> TAB_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, GojiraMod.id("gojira_mod"));
 	public static final CreativeModeTab TAB = Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, TAB_KEY, FabricCreativeModeTab.builder()
 			.title(Component.translatable("itemGroup.gojiramod.gojira_mod"))
 			.icon(() -> new ItemStack(GOJIRA_SPAWN_EGG))
-			.displayItems((params, output) -> output.accept(GOJIRA_SPAWN_EGG))
+			.displayItems((params, output) -> {
+				output.accept(GOJIRA_SPAWN_EGG);
+				output.accept(SHOWA_GODZILLA_SPAWN_EGG);
+			})
 			.build());
 
 	private ModItems() {
 	}
 
 	public static void init() {
-		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.SPAWN_EGGS).register(output -> output.insertAfter(Items.GUARDIAN_SPAWN_EGG, GOJIRA_SPAWN_EGG));
+		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.SPAWN_EGGS).register(output -> {
+			output.insertAfter(Items.GUARDIAN_SPAWN_EGG, GOJIRA_SPAWN_EGG);
+			output.insertAfter(GOJIRA_SPAWN_EGG, SHOWA_GODZILLA_SPAWN_EGG);
+		});
 	}
 }

@@ -1,6 +1,8 @@
 {
   "entity.gojiramod.gojira": "Gojira",
+  "entity.gojiramod.showa_godzilla": "Showa Godzilla",
   "item.gojiramod.gojira_spawn_egg": "Gojira Spawn Egg",
+  "item.gojiramod.showa_godzilla_spawn_egg": "Showa Godzilla Spawn Egg",
   "itemGroup.gojiramod.gojira_mod": "Gojira Mod",
   "subtitles.gojiramod.gojira.roar": "Gojira roars: SKREEONK!"
 }

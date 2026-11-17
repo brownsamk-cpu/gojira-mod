@@ -24,10 +24,26 @@ public final class ModEntities {
 					.clientTrackingRange(16)
 					.build(GOJIRA_KEY));
 
+	public static final ResourceKey<EntityType<?>> SHOWA_GODZILLA_KEY = ResourceKey.create(Registries.ENTITY_TYPE, GojiraMod.id("showa_godzilla"));
+
+	/**
+	 * 0.2.0: Showa Godzilla, June's hero. Same size as Gojira (54.67 blocks to look at, a 6 x 16 hitbox), but he's not a
+	 * monster: MISC category like the iron golem, so iron golems leave him alone and Peaceful doesn't remove him.
+	 * No natural spawning: only from his spawn egg.
+	 */
+	public static final EntityType<ShowaGodzilla> SHOWA_GODZILLA = Registry.register(BuiltInRegistries.ENTITY_TYPE, SHOWA_GODZILLA_KEY,
+			EntityType.Builder.<ShowaGodzilla>of(ShowaGodzilla::new, MobCategory.MISC)
+					.sized(ShowaGodzilla.HITBOX_WIDTH, ShowaGodzilla.HITBOX_HEIGHT)
+					.eyeHeight(ShowaGodzilla.HITBOX_HEIGHT - 1.0F)
+					.fireImmune()
+					.clientTrackingRange(16)
+					.build(SHOWA_GODZILLA_KEY));
+
 	private ModEntities() {
 	}
 
 	public static void init() {
 		FabricDefaultAttributeRegistry.register(GOJIRA, Gojira.createAttributes());
+		FabricDefaultAttributeRegistry.register(SHOWA_GODZILLA, ShowaGodzilla.createAttributes());
 	}
 }

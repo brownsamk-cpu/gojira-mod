@@ -1,7 +1,7 @@
 # Gojira Mod
 
 A Fabric mod for Minecraft 26.3 (Fabric Loader 0.19.5, Fabric API 0.163.0+26.3, Java 25), designed by June and Leon.
-A separate mod from the Horror Mod.
+A separate mod from the Horror Mod. Two kaiju: **Gojira** (always angry) and, new in 0.2.0, **Showa Godzilla** (a hero).
 
 ## Gojira (`gojiramod:gojira`)
 - A giant, charcoal-grey, dinosaur-like kaiju that stands upright on thick legs, with short clawed arms, a thick neck, a
@@ -85,17 +85,70 @@ A separate mod from the Horror Mod.
   Spawning dozens at once may slow down older computers.
 - **No natural spawning**: a mob that can't be beaten and never despawns would pile up in the oceans over time.
 
+## Showa Godzilla (`gojiramod:showa_godzilla`), new in 0.2.0
+June's hero kaiju. He's inspired by the friendlier 1960s/70s "Showa era" films, but he's our own original blocky
+Minecraft design (no movie models, textures or sounds copied), and he looks clearly different from our scarier Gojira:
+- **Look:** a stocky charcoal body with knobbly bumps, a big round belly (smooth grey-tan with soft ridges), very thick
+  column legs with blunt toes, short stubby arms with mitten hands, a long seven-part tail that drags on the ground, and
+  three rows of **bright white, rounded** back plates (Gojira's are pale and jagged). His head is **round and friendly**:
+  a short rounded muzzle, **big round eyes** (white with a dark pupil and a shine), little ear bumps and a smiling lip
+  line. 48 moving parts, 185 cubes, 24 plates, a 1024 x 1024 skin.
+- **Same size as Gojira:** 164/3 = 54.67 blocks tall (hitbox 6 x 16, like Gojira).
+- **A hero of humanity:** he never targets or hurts players, villagers, iron golems or animals, even if you hit him by
+  accident. He goes after **hostile mobs only** (zombies, skeletons, creepers, spiders, slimes, ... and **Gojira**),
+  nearest first, up to 64 blocks away. All his attacks (stomp, swipe, whip, kick, beam) only damage hostile mobs, so
+  standing on his toes is safe. He's not a monster to the game either: iron golems leave him alone, and he stays in
+  Peaceful.
+- **Same powers as Gojira:** the stomp, claw swipe, tail whip, glowing white beam, the same "SKREEONK!" roar, swimming in
+  deep water, breathing underwater, and he can't be beaten (1000 health, heals 40 a second, never below 1). No boss bar.
+- **Jet flight (new):** if his target is more than 40 blocks away, across a gap (no floor within 6 blocks below), or up a
+  cliff more than 12 blocks high, he blasts his white beam out **backward like a rocket** and flies there **tail first**:
+  his body tips flat, his head lifts so the beam points behind him, his plates glow blue-white and a long trail of beam
+  sparkles streams out of his mouth. He cruises about 10 blocks above the target's height, climbs over things in the way,
+  and **lands** when he's 16 blocks from it (no fall damage).
+- **Drop kick (new):** for a hostile mob in front of him that's just too far for a swipe (18 to 36 blocks), he crouches,
+  jumps forward, tips onto his back in mid-air and **kicks with both feet** (4 hearts on Normal, big knockback), then gets
+  back up. 5-second cooldown.
+- **Victory dance (new):** after he defeats a mob, he does a 3-second happy dance: hopping from foot to foot with both
+  arms up in a V, wiggling his hips, bobbing his head, wagging his tail, with music notes and green sparkles.
+- **Falling over:** only `/kill` (or the void) can stop him. He just **falls over** onto his side and is gone after 5
+  seconds. **No bones**, on land or in water. The 0.1.6 "killed forever" fix is built in: nothing heals him once he's been
+  killed, not even saving and reloading the world.
+- Spawn egg: **Showa Godzilla Spawn Egg** (`gojiramod:showa_godzilla_spawn_egg`), a detailed 64 x 64 egg (a knobbly
+  charcoal shell, a tan belly patch, rounded white plates, two friendly eyes, and a glowing blue-white jet streak). It's in
+  the Gojira Mod creative tab and right after the Gojira egg in Spawn Eggs. He doesn't spawn naturally.
+- `/kill @e[type=gojiramod:showa_godzilla]` removes him.
+
+### Showa Godzilla limits
+- Like Gojira, his attacks and flight aim from where the big model's feet and mouth are, but you can only hit him in his
+  6 x 16 hitbox, and he walks straight at targets instead of pathfinding.
+- He flies at anything far away, so in a big open world he may zip off after a distant hostile mob.
+- While he's busy flying, kicking or dancing he doesn't start other attacks.
+- If he fights Gojira, neither can win (they both heal faster than they're hurt); `/kill` one of them.
+- His skin is a 1024 x 1024 texture, so the jar is now about 1.2 MB.
+
 ## Files
 - `tools/skeleton.py` generates the skeleton layout (`GojiraSkeletonLayout.java`) and can save a top-down preview PNG.
 - `tools/gojira.py` generates everything from data: the model boxes (`GojiraModelLayer.java`), the textures (skin, spike
   glow, spawn egg, icon) and the roar `.ogg`. It also measures the model and writes `GojiraDimensions.java` (scale, mouth, feet, reach), which `Gojira.java` and the renderer use.
-- Build: `./gradlew build` runs 16 game tests:
-  - registration and model size/detail, and the detailed egg texture;
-  - can't die, regen outpaces damage, and the `/kill` off switch with its death animation (no bones on land);
-  - an underwater kill leaves the bone skeleton on the sea floor (and never replaces solid blocks);
-  - stomp, claw swipe and tail whip, and picking the swipe on its own;
-  - beam hits, and a wall blocks the beam;
-  - boss bar, always hostile to players, and targets the nearest mob (not armor stands or other Gojiras);
-  - no drowning, and the swim flag in deep water.
+- `tools/showa.py` generates Showa Godzilla's model boxes (`ShowaGodzillaModelLayer.java`), `ShowaDimensions.java`, his
+  skin and glow textures and his spawn egg. `tools/showa_preview.py` draws preview pictures of him without OpenGL.
+- Build: `./gradlew build` runs 28 game tests.
+  - 17 Gojira tests:
+    - registration and model size/detail, and the detailed egg texture;
+    - can't die, regen outpaces damage, the `/kill` off switch with its death animation (no bones on land), and `/kill` is
+      forever (even after a reload);
+    - an underwater kill leaves the bone skeleton on the sea floor (and never replaces solid blocks);
+    - stomp, claw swipe and tail whip, and picking the swipe on its own;
+    - beam hits, and a wall blocks the beam;
+    - boss bar, always hostile to players, and targets the nearest mob (not armor stands or other Gojiras);
+    - no drowning, and the swim flag in deep water.
+  - 11 Showa Godzilla tests (their own batch, `gojiramod:showa`, run after Gojira's):
+    - registration, size, his own model and detailed egg; can't die and regens;
+    - hero targeting (picks the husk, never the player, villager, iron golem or cow), and his stomp and swipe spare friends;
+    - flies to a far target tail first with the beam trail and lands; flies across gaps and up cliffs, walks over bridges;
+    - the drop kick hits with both feet, and he picks it on his own at mid range;
+    - the victory dance after a defeat;
+    - `/kill` is forever (even after a reload) with no bones, and no bones when killed in deep water (after swimming).
 
 License: CC0.
