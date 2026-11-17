@@ -1,0 +1,32 @@
+{
+	"schemaVersion": 1,
+	"id": "gojiramod",
+	"version": "${version}",
+	"name": "Gojira Mod",
+	"description": "June and Leon's kaiju: Gojira, a giant (50 blocks tall) dark grey dinosaur-like ocean monster with a long tail and pale spikes down its back. It swims in the ocean and wades onto land, is always angry, stomps the ground, roars \"SKREEONK!\" and breathes a glowing white beam. It can't be beaten: it heals faster than you can hurt it. Spawn it with the Gojira Spawn Egg.",
+	"authors": [
+		"Sam Brown",
+		"June",
+		"Leon"
+	],
+	"contact": {
+		"sources": "https://github.com/brownsamk-cpu/gojira-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/gojiramod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.gojiramod.GojiraMod"
+		],
+		"client": [
+			"com.gojiramod.client.GojiraModClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

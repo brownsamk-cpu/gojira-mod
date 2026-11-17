@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "gojiramod-gametest",
+  "version": "1.0.0",
+  "name": "Gojira Mod game tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.gojiramod.test.GojiraGameTest"
+    ],
+    "fabric-client-gametest": [
+      "com.gojiramod.test.GojiraScreenshots"
+    ]
+  },
+  "depends": {
+    "gojiramod": "*"
+  }
+}

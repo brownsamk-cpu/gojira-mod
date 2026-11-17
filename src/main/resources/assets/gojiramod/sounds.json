@@ -1,0 +1,8 @@
+{
+  "entity.gojira.roar": {
+    "subtitle": "subtitles.gojiramod.gojira.roar",
+    "sounds": [
+      "gojiramod:entity/gojira_roar"
+    ]
+  }
+}
