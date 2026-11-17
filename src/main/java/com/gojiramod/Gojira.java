@@ -198,6 +198,8 @@ public class Gojira extends Monster {
 	private final ServerBossEvent bossEvent = (ServerBossEvent) new ServerBossEvent(java.util.UUID.randomUUID(),
 			Component.translatable("entity.gojiramod.gojira"), BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS).setDarkenScreen(false);
 	private boolean allowDeath;
+	/** 0.1.6: set for good once /kill (or the void) gets him; saved, so a reload can't bring him back. */
+	private boolean killed;
 	private int stompTicks, stompCooldown, beamTicks, beamCooldown, roarCooldown = 60;
 	private int stomps, beamPulses, beamHits, roars;
 	private int swipeTicks, whipTicks, meleeCooldown, swipes, whips, meleeHits, deathDustBursts;
@@ -253,8 +255,26 @@ public class Gojira extends Monster {
 
 	@Override
 	public void setHealth(final float health) {
+		if (this.killed) {
+			// 0.1.6: once /kill got him he stays dead: nothing (regen, heal, a reload, max-health changes) can raise his health again
+			super.setHealth(0.0F);
+			return;
+		}
 		// Never lets its health reach 0 (no death), unless it's /kill or the void (see hurtServer).
-		super.setHealth(this.allowDeath ? health : Math.max(health, MIN_HEALTH));
+		// The client just mirrors the server (e.g. the death event sets health 0 there), so it never clamps.
+		super.setHealth(this.allowDeath || this.level().isClientSide() ? health : Math.max(health, MIN_HEALTH));
+	}
+
+	@Override
+	public void heal(final float heal) {
+		if (!this.killed) {
+			super.heal(heal);
+		}
+	}
+
+	/** True once /kill or the void has got him: he's dying (or dead) for good. */
+	public boolean isKilled() {
+		return this.killed;
 	}
 
 	@Override
@@ -295,7 +315,10 @@ public class Gojira extends Monster {
 		}
 		double depth = this.isInWater() ? this.getFluidHeight(FluidTags.WATER) : 0.0;
 		this.entityData.set(DATA_SWIMMING, this.isAlive() && (depth >= SWIM_DEPTH || (depth >= SWIM_DEPTH_FLOATING && !this.onGround())));
-		if (this.isAlive() && this.getHealth() < this.getMaxHealth()) {
+		if (this.killed && this.getHealth() > 0.0F) {
+			super.setHealth(0.0F); // belt and braces: a killed Gojira never comes back
+		}
+		if (!this.killed && this.isAlive() && this.getHealth() < this.getMaxHealth()) {
 			this.heal(REGEN_PER_TICK);
 		}
 		// swimming: when chasing someone at the surface or on land it swims up, keeping its head and shoulders out of the water
@@ -761,7 +784,10 @@ public class Gojira extends Monster {
 	@Override
 	public void die(final DamageSource source) {
 		// remember whether it died underwater: then it leaves its skeleton on the sea floor when the animation ends
-		this.diedUnderwater = this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= SKELETON_WATER_DEPTH;
+		if (!this.killed) {
+			this.diedUnderwater = this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= SKELETON_WATER_DEPTH;
+		}
+		this.killed = true;
 		super.die(source);
 	}
 
@@ -944,6 +970,7 @@ public class Gojira extends Monster {
 		super.addAdditionalSaveData(output);
 		output.putInt("BeamCooldown", this.beamCooldown);
 		output.putBoolean("DiedUnderwater", this.diedUnderwater);
+		output.putBoolean("Killed", this.killed);
 	}
 
 	@Override
@@ -951,6 +978,12 @@ public class Gojira extends Monster {
 		super.readAdditionalSaveData(input);
 		this.beamCooldown = input.getIntOr("BeamCooldown", 0);
 		this.diedUnderwater = input.getBooleanOr("DiedUnderwater", false);
+		// 0.1.6: a Gojira saved mid-death (Health 0) used to load with health 1 (the "can't be beaten" floor) and regen to full.
+		// Older saves have no "Killed" flag, so a saved health of 0 counts too. Then the death animation just carries on.
+		this.killed = input.getBooleanOr("Killed", false) || input.getFloatOr("Health", MAX_HEALTH) <= 0.0F;
+		if (this.killed) {
+			super.setHealth(0.0F);
+		}
 		if (this.hasCustomName()) {
 			this.bossEvent.setName(this.getDisplayName());
 		}

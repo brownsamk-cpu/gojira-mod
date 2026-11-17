@@ -59,6 +59,10 @@ A separate mod from the Horror Mod.
   arms with claws, back plates, and a long tail of vertebrae. Each bone drops onto the sea floor below it. Bones only
   replace water, air or seagrass, never stone, sand or anything someone built, and bits with no floor underneath are
   skipped. If it dies on land there are no bones, just the topple.
+- 0.1.6: **`/kill` is forever.** Fixed a bug where Gojira could come back after `/kill`: if the world saved him while he
+  was toppling (for example `/kill @e` also killed you and you respawned far away, or you left the world), he loaded
+  back in with 1 health and his regen healed him to full. Now once `/kill` (or the void) gets him, nothing can heal him,
+  a reload just carries on the death animation, and he's removed at the end (leaving bones if he was underwater).
 
 ### Grown-up off switches
 - `/kill @e[type=gojiramod:gojira]` still works, because `/kill` bypasses the "can't be beaten" rule. It plays the

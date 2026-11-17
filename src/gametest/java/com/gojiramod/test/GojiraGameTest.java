@@ -197,6 +197,44 @@ public class GojiraGameTest {
 		});
 	}
 
+	/**
+	 * 0.1.6 (June's bug: "/kill @e kills him but he regens"): the real /kill command finishes him for good. Once he's been killed,
+	 * nothing can bring his health back: not regen, not heal, not setHealth, and not saving + reloading the world mid-animation
+	 * (which is what happens when /kill @e also kills you and you respawn far away, or you leave the world while he's toppling).
+	 */
+	@GameTest(maxTicks = 220)
+	public void killCommandIsForever(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Gojira g = calmGojira(helper, new BlockPos(1, 2, 1));
+		g.hurtServer(level, level.damageSources().generic(), 30.0F); // a recent sword hit (hurt cooldown running)
+		level.getServer().getCommands().performPrefixedCommand(
+				level.getServer().createCommandSourceStack().withSuppressedOutput(),
+				"kill " + g.getStringUUID());
+		helper.assertTrue(g.isDeadOrDying() && g.getHealth() <= 0.0F && g.isKilled(), "/kill command hits him");
+		g.heal(500.0F);
+		g.setHealth(Gojira.MAX_HEALTH);
+		helper.assertTrue(g.getHealth() <= 0.0F && g.isDeadOrDying(), "nothing heals him once he's been killed");
+		helper.runAfterDelay(20, () -> {
+			helper.assertTrue(!g.isRemoved() && g.getHealth() <= 0.0F, "no regen during the death animation");
+			// save him mid-animation and load him back (like his chunk unloading and loading again)
+			net.minecraft.world.level.storage.TagValueOutput out = net.minecraft.world.level.storage.TagValueOutput.createWithContext(
+					net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess());
+			g.saveWithoutId(out);
+			net.minecraft.nbt.CompoundTag tag = out.buildResult();
+			int deathTimeBefore = g.deathTime;
+			g.discard();
+			Gojira again = ModEntities.GOJIRA.create(level, net.minecraft.world.entity.EntitySpawnReason.LOAD);
+			again.load(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), tag));
+			again.calmForTest();
+			level.addFreshEntity(again);
+			helper.assertTrue(again.isKilled() && again.getHealth() <= 0.0F && again.isDeadOrDying() && !again.isAlive(),
+					"still dead after a reload (health " + again.getHealth() + ")");
+			helper.assertTrue(again.deathTime == deathTimeBefore, "death animation picks up where it left off");
+			helper.runAfterDelay(10, () -> helper.assertTrue(again.getHealth() <= 0.0F, "no regen after a reload either"));
+			helper.succeedWhen(() -> helper.assertTrue(again.isRemoved(), "he finishes dying and is gone"));
+		});
+	}
+
 	/** Stomp: hurts and knocks back something near its feet, makes no holes in the ground. */
 	@GameTest(maxTicks = 60)
 	public void stompDamagesNearby(GameTestHelper helper) {
