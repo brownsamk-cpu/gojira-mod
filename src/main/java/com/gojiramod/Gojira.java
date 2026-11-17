@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -61,6 +62,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Animations (0.1.4): it swims (body tilts flat, tail sweeps, legs kick, arms tucked) in deep water, swipes and whips,
  * and when it really dies (only {@code /kill} or the void) it slowly topples over, its plates' glow fades, and dust flies.
+ * If it dies underwater, it leaves a giant bone-block skeleton lying on the sea floor (0.1.5, {@link GojiraSkeleton}).
  *
  * <p>Size: the model is drawn {@link #VISUAL_HEIGHT} blocks tall but the real hitbox is only {@link #HITBOX_WIDTH} x
  * {@link #HITBOX_HEIGHT} (a 55-block hitbox couldn't move through the world and would be very laggy). Attacks are measured from
@@ -174,6 +176,8 @@ public class Gojira extends Monster {
 	// ---- death (0.1.4): only /kill or the void ----
 	/** It topples for {@link #TOPPLE_TICKS}, lies still while its glow fades, and is removed after {@link #DEATH_TICKS} (5 s). */
 	public static final int TOPPLE_TICKS = 60, DEATH_TICKS = 100;
+	/** 0.1.5: dying in water at least this deep (around its hitbox) leaves a bone-block skeleton on the sea floor. */
+	public static final double SKELETON_WATER_DEPTH = 6.0;
 
 	// ---- swimming (0.1.4) ----
 	/** Swims (instead of wading) when the water is at least this deep around its hitbox, or when it's off the bottom. */
@@ -198,6 +202,8 @@ public class Gojira extends Monster {
 	private int stomps, beamPulses, beamHits, roars;
 	private int swipeTicks, whipTicks, meleeCooldown, swipes, whips, meleeHits, deathDustBursts;
 	private int clientSwipeTicks, clientWhipTicks;
+	private boolean diedUnderwater;
+	private int skeletonBlocks = -1;
 	private float swimAnim, swimAnimO;
 	private @Nullable LivingEntity beamTarget;
 	private @Nullable Vec3 beamAim;
@@ -753,6 +759,31 @@ public class Gojira extends Monster {
 	// ---- death: only /kill or the void; a slow topple instead of the usual quick flip and poof ----
 
 	@Override
+	public void die(final DamageSource source) {
+		// remember whether it died underwater: then it leaves its skeleton on the sea floor when the animation ends
+		this.diedUnderwater = this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= SKELETON_WATER_DEPTH;
+		super.die(source);
+	}
+
+	public boolean diedUnderwater() {
+		return this.diedUnderwater;
+	}
+
+	/** How many bone blocks its skeleton placed (-1 = none yet / it didn't die underwater). */
+	public int getSkeletonBlocks() {
+		return this.skeletonBlocks;
+	}
+
+	/** Lays its skeleton down where it fell (on its side, snout the way it faced), on the sea floor below. */
+	private void leaveSkeleton(final ServerLevel level) {
+		Direction facing = Direction.fromYRot(this.yBodyRot);
+		Vec3 fall = this.toppleDirection();
+		Direction fell = Direction.getApproximateNearest(fall.x, 0, fall.z);
+		this.skeletonBlocks = GojiraSkeleton.place(level, this.blockPosition(), facing, fell);
+		level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.SKELETON_DEATH, SoundSource.HOSTILE, 3.0F, 0.4F);
+	}
+
+	@Override
 	protected void tickDeath() {
 		this.deathTime++;
 		if (!(this.level() instanceof ServerLevel level)) {
@@ -783,6 +814,9 @@ public class Gojira extends Monster {
 			level.sendParticles(ParticleTypes.CLOUD, true, false, p.x, p.y + 1.0, p.z, 3, 2.0, 0.5, 2.0, 0.01);
 		}
 		if (this.deathTime >= DEATH_TICKS && !this.isRemoved()) {
+			if (this.diedUnderwater) {
+				this.leaveSkeleton(level);
+			}
 			for (double d = 0; d < VISUAL_HEIGHT; d += 4.0) {
 				Vec3 p = this.position().add(dir.scale(d)).add(0, GojiraDimensions.BODY_HALF_WIDTH * 0.5, 0);
 				level.sendParticles(ParticleTypes.POOF, true, false, p.x, p.y, p.z, 10, 3.0, 2.0, 3.0, 0.05);
@@ -909,12 +943,14 @@ public class Gojira extends Monster {
 	protected void addAdditionalSaveData(final ValueOutput output) {
 		super.addAdditionalSaveData(output);
 		output.putInt("BeamCooldown", this.beamCooldown);
+		output.putBoolean("DiedUnderwater", this.diedUnderwater);
 	}
 
 	@Override
 	protected void readAdditionalSaveData(final ValueInput input) {
 		super.readAdditionalSaveData(input);
 		this.beamCooldown = input.getIntOr("BeamCooldown", 0);
+		this.diedUnderwater = input.getBooleanOr("DiedUnderwater", false);
 		if (this.hasCustomName()) {
 			this.bossEvent.setName(this.getDisplayName());
 		}

@@ -53,6 +53,12 @@ A separate mod from the Horror Mod.
     and it slowly topples onto its side like a falling tree (3 seconds). Its plates' glow fades, and dust flies up from its
     feet and in a long line where it crashes down. It lies still for 2 seconds, then disappears in a puff. It never turns
     red.
+- 0.1.5: **skeleton on the sea floor.** If it dies underwater (in water at least 6 blocks deep), then after the death
+  animation it leaves a giant skeleton lying on its side on the sea floor, the way it fell. It's made of about 460 bone
+  blocks and is 62 blocks long and 46 wide: a skull with an eye socket and teeth, a spine, ribs, legs with clawed feet,
+  arms with claws, back plates, and a long tail of vertebrae. Each bone drops onto the sea floor below it. Bones only
+  replace water, air or seagrass, never stone, sand or anything someone built, and bits with no floor underneath are
+  skipped. If it dies on land there are no bones, just the topple.
 
 ### Grown-up off switches
 - `/kill @e[type=gojiramod:gojira]` still works, because `/kill` bypasses the "can't be beaten" rule. It plays the
@@ -76,11 +82,13 @@ A separate mod from the Horror Mod.
 - **No natural spawning**: a mob that can't be beaten and never despawns would pile up in the oceans over time.
 
 ## Files
+- `tools/skeleton.py` generates the skeleton layout (`GojiraSkeletonLayout.java`) and can save a top-down preview PNG.
 - `tools/gojira.py` generates everything from data: the model boxes (`GojiraModelLayer.java`), the textures (skin, spike
   glow, spawn egg, icon) and the roar `.ogg`. It also measures the model and writes `GojiraDimensions.java` (scale, mouth, feet, reach), which `Gojira.java` and the renderer use.
-- Build: `./gradlew build` runs 15 game tests:
+- Build: `./gradlew build` runs 16 game tests:
   - registration and model size/detail, and the detailed egg texture;
-  - can't die, regen outpaces damage, and the `/kill` off switch with its death animation;
+  - can't die, regen outpaces damage, and the `/kill` off switch with its death animation (no bones on land);
+  - an underwater kill leaves the bone skeleton on the sea floor (and never replaces solid blocks);
   - stomp, claw swipe and tail whip, and picking the swipe on its own;
   - beam hits, and a wall blocks the beam;
   - boss bar, always hostile to players, and targets the nearest mob (not armor stands or other Gojiras);

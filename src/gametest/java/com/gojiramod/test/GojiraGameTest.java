@@ -1,6 +1,7 @@
 package com.gojiramod.test;
 
 import com.gojiramod.Gojira;
+import com.gojiramod.GojiraSkeletonLayout;
 import com.gojiramod.ModEntities;
 import com.gojiramod.ModItems;
 import com.gojiramod.ModSounds;
@@ -191,6 +192,8 @@ public class GojiraGameTest {
 			helper.assertTrue(g.isRemoved(), "gone after the death animation");
 			helper.assertTrue(g.deathTime >= Gojira.DEATH_TICKS && Gojira.toppleDegrees(g.deathTime) == 90.0F, "it toppled all the way over first");
 			helper.assertTrue(g.getDeathDustBursts() >= Gojira.TOPPLE_TICKS / 4, "a big crash of dust when it hits the ground");
+			helper.assertTrue(!g.diedUnderwater() && g.getSkeletonBlocks() == -1 && countBones(helper, g.blockPosition(), 70, -2, 4) == 0,
+					"died on land: no skeleton");
 		});
 	}
 
@@ -400,6 +403,66 @@ public class GojiraGameTest {
 			helper.assertTrue(g.getTarget() == cow, "targets the nearby cow");
 			clearPad(helper, pad, 12);
 		});
+	}
+
+	/** 0.1.5: killed underwater, it topples, and when the death animation ends it leaves a big bone-block skeleton on the sea floor. */
+	@GameTest(maxTicks = 220)
+	public void underwaterDeathLeavesSkeleton(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		BlockPos feet = helper.absolutePos(new BlockPos(1, 1, 1)).above(285);
+		// a stone sea floor big enough for the whole skeleton (it falls east and faces south), a deep pool around Gojira,
+		// and one stone block it must NOT replace, plus some seagrass it may replace
+		BlockPos lo = feet.offset(-3, -1, GojiraSkeletonLayout.MIN_B - 3), hi = feet.offset(GojiraSkeletonLayout.MAX_A + 3, -1, GojiraSkeletonLayout.MAX_B + 3);
+		for (BlockPos p : BlockPos.betweenClosed(lo, hi)) {
+			level.setBlock(p, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+		}
+		for (BlockPos p : BlockPos.betweenClosed(feet.offset(-4, 0, -4), feet.offset(4, 9, 4))) {
+			level.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
+		}
+		BlockPos rock = feet.offset(1, 0, 0); // under the bottom of its foot (a=1, b=0)
+		level.setBlock(rock, Blocks.COBBLESTONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+		BlockPos grass = feet.offset(2, 0, 0); // at the bottom of its shin (a=2, b=0), in the pool
+		level.setBlock(grass, Blocks.SEAGRASS.defaultBlockState(), Block.UPDATE_CLIENTS);
+		Gojira g = calmGojira(helper, new BlockPos(1, 2, 1));
+		moveTo(g, feet, 0); // faces south
+		helper.runAfterDelay(5, () -> {
+			helper.assertTrue(g.isInWater(), "deep in the water");
+			g.kill(level);
+			helper.assertTrue(g.diedUnderwater(), "it knows it died underwater");
+			helper.runAfterDelay(Gojira.DEATH_TICKS - 10, () -> helper.assertTrue(!g.isRemoved() && countBones(helper, feet, 70, -1, 4) == 0,
+					"no bones until the death animation finishes"));
+		});
+		helper.succeedWhen(() -> {
+			helper.assertTrue(g.isRemoved(), "the death animation finished");
+			int bones = countBones(helper, feet, 70, -1, 4);
+			helper.assertTrue(g.getSkeletonBlocks() >= GojiraSkeletonLayout.COUNT * 9 / 10 && bones == g.getSkeletonBlocks(),
+					"a skeleton of bone blocks on the sea floor (placed " + g.getSkeletonBlocks() + ", found " + bones + ")");
+			helper.assertTrue(level.getBlockState(rock).is(Blocks.COBBLESTONE), "it never replaces solid blocks");
+			helper.assertTrue(level.getBlockState(grass).is(Blocks.BONE_BLOCK), "seagrass may be replaced");
+			for (BlockPos p : BlockPos.betweenClosed(lo, hi)) {
+				helper.assertTrue(level.getBlockState(p).is(Blocks.STONE), "the sea floor is untouched");
+			}
+			helper.assertTrue(countBones(helper, feet, 70, 3, 3) == 0, "everything lies within 3 blocks of the floor");
+			// skull at the far end (a=42, b=15 is solid skull, layer 0) and the tail tip at the other
+			helper.assertTrue(level.getBlockState(feet.offset(41, 0, 16)).is(Blocks.BONE_BLOCK), "the skull lies where its head fell");
+			for (BlockPos p : BlockPos.betweenClosed(lo.above(), hi.above(12))) {
+				level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+			}
+			for (BlockPos p : BlockPos.betweenClosed(lo, hi)) {
+				level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+			}
+		});
+	}
+
+	/** Counts bone blocks within {@code radius} blocks sideways of {@code center}, from {@code dyLo} to {@code dyHi} blocks up. */
+	private static int countBones(GameTestHelper helper, BlockPos center, int radius, int dyLo, int dyHi) {
+		int n = 0;
+		for (BlockPos p : BlockPos.betweenClosed(center.offset(-radius, dyLo, -radius), center.offset(radius, dyHi, radius))) {
+			if (helper.getLevel().getBlockState(p).is(Blocks.BONE_BLOCK)) {
+				n++;
+			}
+		}
+		return n;
 	}
 
 	/** Lives in the ocean: underwater it doesn't drown or lose air. */
